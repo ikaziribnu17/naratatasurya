@@ -70,7 +70,7 @@
         /* --- KIRI: PANEL KENDALI (Navigasi Tab & VO) --- */
         .left-panel { 
             flex: 0.38; display: flex; flex-direction: column; 
-            height: 100%; gap: 2.5vh; 
+            height: 100%; gap: 2vh; 
         }
 
         .sector-title {
@@ -81,11 +81,11 @@
         }
         
         /* Sub-Menu Tabs (Glassmorphism) */
-        .tab-menu { display: flex; flex-direction: column; gap: 1.5vh; flex-shrink: 0; }
+        .tab-menu { display: flex; flex-direction: column; gap: 1vh; flex-shrink: 0; }
         .tab-btn {
             background: rgba(0, 242, 255, 0.05); border: 2px solid rgba(0, 242, 255, 0.3);
             color: #cbd5e1; font-family: var(--font-heading); font-size: clamp(1.1rem, 1.8vw, 1.6rem);
-            padding: 2vh 2vw; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            padding: 1.5vh 2vw; border-radius: 12px; cursor: pointer; transition: 0.3s;
             text-transform: uppercase; text-align: left; letter-spacing: 1px;
             display: flex; justify-content: space-between; align-items: center;
             backdrop-filter: blur(5px);
@@ -107,25 +107,44 @@
             background: var(--ui-bg); backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 153, 0, 0.3); border-left: 6px solid var(--neon-orange);
             padding: 2vh 1.5vw; border-radius: 12px; 
-            font-family: var(--font-body); font-size: clamp(1.1rem, 1.5vw, 1.5rem); 
+            font-family: var(--font-body); font-size: clamp(1rem, 1.3vw, 1.4rem); 
             color: #E2E8F0; line-height: 1.5;
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             flex-shrink: 0;
         }
         .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
 
-        /* Tombol Kembali */
+        /* Tombol Navigasi Bawah */
+        .nav-buttons {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5vh;
+        }
+        
         .btn-nav {
-            margin-top: auto; background: rgba(0, 242, 255, 0.1); 
+            background: rgba(0, 242, 255, 0.1); 
             border: 2px solid var(--neon-cyan); color: var(--neon-cyan); 
-            font-family: var(--font-heading); font-size: clamp(1.1rem, 1.6vw, 1.6rem); 
-            padding: 2vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            font-family: var(--font-heading); font-size: clamp(1rem, 1.4vw, 1.5rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
             text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
             display: flex; align-items: center; justify-content: center; gap: 10px;
         }
         .btn-nav svg { width: clamp(20px, 2vw, 25px); height: clamp(20px, 2vw, 25px); fill: var(--neon-cyan); transition: 0.3s; }
         .btn-nav:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-5px);}
         .btn-nav:hover svg { fill: var(--space-blue); transform: translateX(-5px); }
+
+        /* Khusus Tombol Lanjut Pluto */
+        .btn-nav.next {
+            background: rgba(255, 153, 0, 0.1);
+            border-color: var(--neon-orange);
+            color: var(--neon-orange);
+        }
+        .btn-nav.next:hover {
+            background: var(--neon-orange);
+            color: var(--space-blue);
+            box-shadow: var(--orange-glow);
+        }
 
         /* --- KANAN: PANEL LAYAR UTAMA (Konten Dinamis) --- */
         .right-panel {
@@ -312,10 +331,16 @@
                 </span>
             </div>
 
-            <button class="btn-nav" onclick="navigasi('menu 3 sektor.html')">
-                <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
-                KEMBALI KE MENU
-            </button>
+            <div class="nav-buttons">
+                <button class="btn-nav next" onclick="navigasi('sektor_2 halaman pluto.html')">
+                    LANJUT: PLANET KERDIL ➔
+                </button>
+
+                <button class="btn-nav" onclick="navigasi('menu 3 sektor.html')">
+                    <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
+                    KEMBALI KE MENU
+                </button>
+            </div>
         </div>
 
         <div class="right-panel">
@@ -427,7 +452,7 @@
             putarAudio('audioRadar');
         };
 
-        // --- SISTEM NAVIGASI TOMBOL KEMBALI ---
+        // --- SISTEM NAVIGASI TOMBOL KEMBALI & LANJUT ---
         function navigasi(url) {
             const sound = document.getElementById('audioClick');
             sound.currentTime = 0; sound.play().catch(e=>{});
