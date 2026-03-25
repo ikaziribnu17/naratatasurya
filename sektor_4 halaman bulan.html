@@ -33,7 +33,6 @@
             color: #ffffff;
             font-family: var(--font-body);
             
-            /* KUNCI LAYAR ANTI-TERPOTONG STANDAR BARU */
             min-height: 100dvh;
             width: 100vw;
             overflow: hidden; 
@@ -63,7 +62,7 @@
             pointer-events: none; z-index: 10;
         }
 
-        /* --- CONTAINER UTAMA (Split Layout 16:9) --- */
+        /* --- CONTAINER UTAMA --- */
         .main-wrapper {
             position: relative; z-index: 20;
             width: 96%; max-width: 1800px; 
@@ -74,7 +73,7 @@
         }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* --- KIRI: PANEL TEKS & MENU (42% Lebar) --- */
+        /* --- KIRI: PANEL TEKS & MENU --- */
         .left-panel {
             flex: 0.42;
             display: flex; flex-direction: column; justify-content: space-between; 
@@ -89,7 +88,6 @@
             flex-shrink: 0; margin-bottom: 0;
         }
         
-        /* Kotak Intro */
         .vo-box {
             background: var(--ui-bg); backdrop-filter: blur(10px);
             border: 2px solid rgba(0, 242, 255, 0.3); border-left: 6px solid var(--neon-cyan);
@@ -102,7 +100,6 @@
         }
         .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
 
-        /* Kotak Detail Informasi Dinamis */
         .info-card {
             flex: 1; background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
             border: 2px solid var(--neon-cyan); border-radius: 20px;
@@ -115,7 +112,6 @@
         .info-title { font-family: var(--font-heading); font-size: clamp(1.6rem, 2.5vw, 3rem); color: var(--neon-cyan); text-transform: uppercase; text-shadow: var(--cyan-glow); margin-bottom: 1.5vh;}
         .info-desc { font-size: clamp(1rem, 1.3vw, 1.4rem); color: #cbd5e1; line-height: 1.6; }
 
-        /* --- NAVIGASI STANDAR (POSISI TETAP DI BAWAH) --- */
         .nav-container {
             display: flex; gap: 2vh; flex-direction: row; margin-top: auto; flex-shrink: 0;
         }
@@ -140,39 +136,31 @@
         .btn-nav.next:hover svg { fill: var(--space-blue); transform: translateX(5px); }
 
 
-        /* --- KANAN: PANEL VISUAL ORBIT BULAN (58% Lebar) --- */
+        /* --- KANAN: PANEL VISUAL ORBIT BULAN --- */
+        /* PERBAIKAN: Flexbox untuk menjauhkan orbit dari matahari */
         .right-panel {
             flex: 0.58; background: rgba(11, 13, 23, 0.6); backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: space-evenly; flex-direction: row;
+            padding: 2vw; box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
         }
 
-        /* Indikator Cahaya Matahari */
-        .sun-indicator {
-            position: absolute; right: 2%; top: 50%; transform: translateY(-50%);
-            display: flex; flex-direction: column; align-items: center; gap: 10px;
-            color: var(--neon-orange); font-family: var(--font-heading);
-            font-size: clamp(1rem, 1.2vw, 1.5rem); text-shadow: var(--orange-glow);
-            opacity: 0.8; pointer-events: none;
-        }
-        .sun-rays { display: flex; gap: 5px; font-size: 2rem; animation: pulseRays 2s infinite alternate;}
-        @keyframes pulseRays { from { opacity: 0.5; transform: translateX(5px); } to { opacity: 1; transform: translateX(-5px); } }
-
-        /* Arena Orbit */
+        /* Arena Orbit (Ukuran dibatasi maksimal 65% dari panel agar tidak mepet) */
         .orbit-arena {
             position: relative;
-            width: clamp(250px, 45vh, 600px);
-            height: clamp(250px, 45vh, 600px);
+            width: min(65%, 45vh);
+            aspect-ratio: 1 / 1;
             border: 2px dashed rgba(0, 242, 255, 0.3);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
             box-shadow: inset 0 0 50px rgba(0,242,255,0.05);
+            flex-shrink: 0;
         }
 
         /* Bumi di Tengah */
         .earth-center {
-            width: clamp(60px, 10vh, 120px); height: clamp(60px, 10vh, 120px);
+            width: clamp(50px, 25%, 120px); 
+            aspect-ratio: 1 / 1;
             border-radius: 50%; 
             background: url('https://upload.wikimedia.org/wikipedia/commons/3/30/Globespin.gif') no-repeat center center/cover;
             background-color: #000;
@@ -182,7 +170,9 @@
 
         /* Node Titik Orbit Bulan */
         .moon-node {
-            position: absolute; width: clamp(25px, 4.5vh, 45px); height: clamp(25px, 4.5vh, 45px);
+            position: absolute; 
+            width: clamp(25px, 12%, 45px); 
+            aspect-ratio: 1 / 1;
             background: #CBD5E1; border-radius: 50%; cursor: pointer;
             box-shadow: inset -5px -5px 10px rgba(0,0,0,0.7), 0 0 10px rgba(255,255,255,0.2);
             transition: 0.3s; display: flex; align-items: center; justify-content: center;
@@ -195,18 +185,27 @@
             transform: translate(-50%, -50%) scale(1.2); z-index: 15;
         }
 
-        /* Koordinat 8 Fase Bulan pada Lingkaran (100% adalah radius lingkaran luar) */
-        /* Cahaya dari Kanan (Bulan Baru di Kanan) */
-        .pos-0 { top: 50%; left: 100%; } /* Bulan Baru */
-        .pos-1 { top: 85.35%; left: 85.35%; } /* Sabit Awal */
-        .pos-2 { top: 100%; left: 50%; } /* Kuartal 1 */
-        .pos-3 { top: 85.35%; left: 14.64%; } /* Cembung Awal */
-        .pos-4 { top: 50%; left: 0%; } /* Purnama */
-        .pos-5 { top: 14.64%; left: 14.64%; } /* Cembung Akhir */
-        .pos-6 { top: 0%; left: 50%; } /* Kuartal 3 */
-        .pos-7 { top: 14.64%; left: 85.35%; } /* Sabit Akhir */
+        /* Koordinat 8 Fase Bulan */
+        .pos-0 { top: 50%; left: 100%; } 
+        .pos-1 { top: 85.35%; left: 85.35%; }
+        .pos-2 { top: 100%; left: 50%; } 
+        .pos-3 { top: 85.35%; left: 14.64%; } 
+        .pos-4 { top: 50%; left: 0%; } 
+        .pos-5 { top: 14.64%; left: 14.64%; } 
+        .pos-6 { top: 0%; left: 50%; } 
+        .pos-7 { top: 14.64%; left: 85.35%; } 
 
-        /* --- RESPONSIVE MOBILE & TABLET --- */
+        /* Indikator Cahaya Matahari (Diisolasi agar tidak menabrak) */
+        .sun-indicator {
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            color: var(--neon-orange); font-family: var(--font-heading);
+            font-size: clamp(0.9rem, 1.2vw, 1.5rem); text-shadow: var(--orange-glow);
+            opacity: 0.9; pointer-events: none; text-align: center;
+        }
+        .sun-rays { display: flex; align-items: center; gap: 5px; font-size: clamp(1.8rem, 3vw, 3rem); animation: pulseRays 2s infinite alternate;}
+        @keyframes pulseRays { from { opacity: 0.6; transform: translateX(5px); } to { opacity: 1; transform: translateX(-5px); } }
+
+        /* --- RESPONSIVE MOBILE & TABLET (Desktop Mode HP) --- */
         @media (max-width: 1024px) {
             body { overflow-y: auto; align-items: flex-start; padding: 20px 0; }
             .main-wrapper { flex-direction: column; width: 95%; height: auto; gap: 20px; padding: 15px; }
@@ -214,8 +213,21 @@
             .sector-title { text-align: center; font-size: 2.8rem; }
             .nav-container { flex-direction: column; margin-top: 10px;}
             
-            .right-panel { min-height: 400px; padding: 30px 0;}
-            .sun-indicator { right: auto; top: 5%; flex-direction: row; transform: none;}
+            /* Orbit & Sun Indicator pada Mode Sempit */
+            .right-panel { 
+                min-height: 350px; padding: 20px 15px; 
+                flex-direction: row; justify-content: space-around;
+            }
+            .orbit-arena {
+                width: min(65%, 50vw);
+            }
+            
+            .sun-text {
+                writing-mode: vertical-rl;
+                text-orientation: upright;
+                letter-spacing: 2px;
+                margin-top: 10px;
+            }
         }
 
         @media (max-width: 600px) {
@@ -225,6 +237,8 @@
             .info-desc { font-size: 1rem; }
             .phase-emoji { font-size: 4rem; }
             .btn-nav { font-size: 1.1rem; padding: 15px 0;}
+            
+            .orbit-arena { width: 220px; }
         }
     </style>
 </head>
@@ -265,11 +279,6 @@
 
         <div class="right-panel">
             
-            <div class="sun-indicator">
-                <div class="sun-rays">☀️ 〰️ 〰️</div>
-                <span>Cahaya Matahari</span>
-            </div>
-
             <div class="orbit-arena">
                 <div class="earth-center"></div>
 
@@ -283,41 +292,46 @@
                 <div class="moon-node pos-7" onclick="tampilFase(7, this)">8</div>
             </div>
 
+            <div class="sun-indicator">
+                <div class="sun-rays">☀️ ⬅️</div>
+                <span class="sun-text">CAHAYA MATAHARI</span>
+            </div>
+
         </div>
 
     </div>
 
     <script>
         const faseBulan = [
-            { // Posisi 0 (Kanan - Dekat Matahari)
+            { 
                 nama: "Bulan Baru (New Moon)", emoji: "🌑",
                 desc: "Posisi Bulan berada di antara Bumi dan Matahari. Bagian bulan yang menghadap Bumi tidak mendapat sinar matahari, sehingga bulan terlihat gelap atau tidak terlihat sama sekali dari Bumi."
             },
-            { // Posisi 1 (Kanan Bawah)
+            { 
                 nama: "Sabit Awal (Waxing Crescent)", emoji: "🌒",
                 desc: "Bulan mulai bergerak. Sedikit bagian bulan yang terkena sinar matahari mulai terlihat dari Bumi, membentuk lengkungan seperti sabit di sisi kanan."
             },
-            { // Posisi 2 (Bawah)
+            { 
                 nama: "Kuartal Pertama (First Quarter)", emoji: "🌓",
                 desc: "Bulan berada pada sudut 90 derajat terhadap Bumi dan Matahari. Tepat setengah bagian sebelah kanan bulan tampak terang bersinar dari Bumi."
             },
-            { // Posisi 3 (Kiri Bawah)
+            { 
                 nama: "Cembung Awal (Waxing Gibbous)", emoji: "🌔",
                 desc: "Hampir seluruh permukaan bulan yang menghadap Bumi terkena sinar matahari. Terlihat membesar (cembung), hanya menyisakan sedikit bagian gelap di sisi kiri."
             },
-            { // Posisi 4 (Kiri - Terjauh dari Matahari)
+            { 
                 nama: "Bulan Purnama (Full Moon)", emoji: "🌕",
                 desc: "Bumi berada di antara Bulan dan Matahari. Seluruh permukaan Bulan yang menghadap ke Bumi memantulkan cahaya matahari secara utuh, terlihat bulat bersinar sempurna."
             },
-            { // Posisi 5 (Kiri Atas)
+            { 
                 nama: "Cembung Akhir (Waning Gibbous)", emoji: "🌖",
                 desc: "Bulan mulai bergerak menyusut dari purnama. Bagian terang mulai berkurang secara perlahan, menyisakan sedikit bayangan gelap di sisi kanan."
             },
-            { // Posisi 6 (Atas)
+            { 
                 nama: "Kuartal Ketiga (Third Quarter)", emoji: "🌗",
                 desc: "Siklus kebalikan dari Kuartal Pertama. Kali ini, hanya setengah bagian sebelah kiri bulan yang tampak terang bersinar jika dilihat dari Bumi."
             },
-            { // Posisi 7 (Kanan Atas)
+            { 
                 nama: "Sabit Akhir (Waning Crescent)", emoji: "🌘",
                 desc: "Fase terakhir sebelum kembali menjadi Bulan Baru. Hanya tersisa pantulan cahaya berbentuk sabit tipis di sisi kiri bulan sebelum akhirnya gelap total."
             }
