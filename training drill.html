@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Training Drill</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- TEMA STANDAR ASTRO-QUEST --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-red: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --green-glow: 0 0 15px rgba(0, 230, 118, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--space-blue); color: #ffffff;
+            font-family: var(--font-body);
+            min-height: 100dvh; width: 100vw; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* --- BACKGROUND --- */
+        .nebula-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.3; pointer-events: none;
+        }
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- LAYOUT UTAMA --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1400px; height: 94dvh; 
+            display: flex; flex-direction: row; gap: 2vw;
+            padding: 2vh 0;
+        }
+
+        /* --- KIRI: JALUR ROKET (20%) --- */
+        .rocket-panel {
+            flex: 0.15; min-width: 80px;
+            background: linear-gradient(to top, #1e3a8a 0%, #0B0D17 50%, #000000 100%);
+            border: 2px solid var(--neon-cyan); border-radius: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), var(--cyan-glow);
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            overflow: hidden;
+        }
+        
+        /* Lintasan & Penanda */
+        .track-line {
+            position: absolute; width: 4px; height: 90%; background: rgba(255,255,255,0.1);
+            left: 50%; transform: translateX(-50%); bottom: 5%; border-radius: 2px;
+        }
+        .marker {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 0.8rem; font-weight: bold; color: rgba(255,255,255,0.5);
+        }
+        .m-100 { top: 5%; } .m-50 { top: 50%; } .m-0 { bottom: 5%; }
+
+        /* Sang Roket */
+        .rocket-avatar {
+            position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%);
+            font-size: clamp(2rem, 4vw, 3.5rem); filter: drop-shadow(0 10px 10px rgba(255,153,0,0.8));
+            transition: bottom 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 2;
+        }
+        /* Api Roket Menyala saat naik */
+        .rocket-avatar::after {
+            content: '🔥'; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%) rotate(180deg) scale(0.5);
+            opacity: 0; transition: 0.3s;
+        }
+        .rocket-avatar.flying::after { opacity: 1; transform: translateX(-50%) rotate(180deg) scale(1.2); animation: flicker 0.2s infinite alternate;}
+        @keyframes flicker { 0% { opacity: 0.8; } 100% { opacity: 1; filter: brightness(1.5); } }
+
+        /* --- KANAN: PANEL KUIS (85%) --- */
+        .quiz-panel {
+            flex: 0.85; background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
+            padding: 3vh 3vw; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative; overflow-y: auto;
+        }
+
+        .header-quiz {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2vh; padding-bottom: 1vh; border-bottom: 2px solid rgba(0,242,255,0.3);
+        }
+        .quiz-title { font-family: var(--font-heading); font-size: clamp(1.5rem, 2vw, 2.5rem); color: var(--neon-cyan); text-transform: uppercase; }
+        .score-display { font-family: var(--font-heading); font-size: 1.5rem; color: var(--neon-orange); background: rgba(255,153,0,0.1); padding: 5px 15px; border-radius: 10px;}
+
+        /* --- AREA DINAMIS KUIS --- */
+        .stage-container { display: none; flex-direction: column; flex: 1; animation: fadeIn 0.4s ease-out; }
+        .stage-container.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Tipe 1: Pilihan Ganda */
+        .question-text { font-size: clamp(1.1rem, 1.5vw, 1.5rem); margin-bottom: 3vh; line-height: 1.5; color: #E2E8F0; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 1.5vh; }
+        .btn-option {
+            background: rgba(45, 27, 78, 0.6); border: 2px solid rgba(255,255,255,0.1);
+            color: white; padding: 2vh 2vw; border-radius: 12px; font-size: 1.1rem;
+            text-align: left; cursor: pointer; transition: 0.3s; font-family: var(--font-body);
+        }
+        .btn-option:hover { background: rgba(0, 242, 255, 0.2); border-color: var(--neon-cyan); }
+        .btn-option.correct { background: rgba(0, 230, 118, 0.3); border-color: var(--neon-green); box-shadow: var(--green-glow); }
+        .btn-option.wrong { background: rgba(255, 51, 102, 0.3); border-color: var(--neon-red); }
+
+        /* Tipe 2: Menjodohkan (Tap-to-Match) */
+        .match-instruction { font-size: 1.1rem; color: var(--neon-orange); margin-bottom: 2vh; text-align: center; }
+        .match-arena { display: flex; gap: 2vw; flex: 1; }
+        .match-col { flex: 1; display: flex; flex-direction: column; gap: 1vh; overflow-y: auto; max-height: 60vh; padding-right: 5px;}
+        .match-col::-webkit-scrollbar { width: 5px; } .match-col::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 5px; }
+        
+        .btn-match {
+            background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255,255,255,0.2);
+            color: white; padding: 1.5vh 1vw; border-radius: 8px; font-size: clamp(0.9rem, 1vw, 1.1rem);
+            text-align: center; cursor: pointer; transition: 0.2s; font-family: var(--font-body);
+        }
+        .btn-match.selected { background: rgba(0, 242, 255, 0.3); border-color: var(--neon-cyan); transform: scale(1.02); }
+        .btn-match.matched { background: rgba(0, 230, 118, 0.2); border-color: var(--neon-green); color: rgba(255,255,255,0.5); pointer-events: none; }
+        .btn-match.error { animation: shake 0.4s; background: rgba(255, 51, 102, 0.3); border-color: var(--neon-red); }
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+
+        /* Tipe 3: Hasil & Pangkat */
+        .result-box { text-align: center; margin: auto; }
+        .result-score { font-family: var(--font-heading); font-size: 5rem; color: var(--neon-green); text-shadow: var(--green-glow); line-height: 1; }
+        .result-rank { font-size: 2rem; color: var(--neon-orange); font-weight: bold; margin: 2vh 0; text-transform: uppercase;}
+        .result-desc { font-size: 1.2rem; color: #cbd5e1; margin-bottom: 4vh; }
+        
+        .btn-primary {
+            background: var(--neon-cyan); color: var(--space-blue); border: none;
+            padding: 1.5vh 3vw; border-radius: 12px; font-family: var(--font-heading);
+            font-size: 1.2rem; font-weight: 700; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: var(--cyan-glow); background: #fff;}
+
+        /* Responsif */
+        @media (max-width: 768px) {
+            .main-wrapper { flex-direction: row; width: 98%; padding: 10px; gap: 10px;}
+            .rocket-panel { flex: 0.15; min-width: 50px; }
+            .rocket-avatar { font-size: 2rem; }
+            .quiz-panel { flex: 0.85; padding: 20px 15px; }
+            .header-quiz { flex-direction: column; gap: 10px; align-items: flex-start;}
+            .match-arena { flex-direction: column; }
+            .match-col { max-height: 35vh; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sndClick" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="sndCorrect" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+    <audio id="sndWrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+    <audio id="sndLaunch" src="https://www.soundjay.com/space/sounds/space-engine-1.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="rocket-panel">
+            <div class="track-line"></div>
+            <div class="marker m-100">100%</div>
+            <div class="marker m-50">50%</div>
+            <div class="marker m-0">0%</div>
+            <div class="rocket-avatar" id="rocketIcon">🚀</div>
+        </div>
+
+        <div class="quiz-panel">
+            <div class="header-quiz">
+                <div class="quiz-title" id="stageTitle">🚀 PERSIAPAN PELUNCURAN</div>
+                <div class="score-display">SKOR: <span id="scoreText">0</span></div>
+            </div>
+
+            <div class="stage-container active" id="stage-intro">
+                <h2 style="font-size: 1.8rem; margin-bottom: 2vh;">Selamat Datang, Kapten!</h2>
+                <p class="question-text">Saatnya membuktikan pengetahuan Anda dari Sektor 01 hingga 05. <br><br><b>MISI:</b> Kumpulkan energi dengan menjawab benar. Setiap 1 jawaban benar (+5 Poin) akan menyalakan mesin dan mengangkat roket Anda lebih tinggi menuju bintang-bintang!</p>
+                <div style="margin-top: auto; text-align: right;">
+                    <button class="btn-primary" onclick="startQuiz()">Mulai Peluncuran</button>
+                </div>
+            </div>
+
+            <div class="stage-container" id="stage-pilgan">
+                <div style="color: var(--neon-cyan); margin-bottom: 1vh; font-weight: bold;">Tahap 1: Navigasi Ganda (<span id="pilganCounter">1</span>/10)</div>
+                <div class="question-text" id="pilganQuestion">Pertanyaan...</div>
+                <div class="options-grid" id="pilganOptions">
+                    </div>
+            </div>
+
+            <div class="stage-container" id="stage-match">
+                <div style="color: var(--neon-orange); margin-bottom: 1vh; font-weight: bold;">Tahap 2: Sinkronisasi Data (Sisa: <span id="matchCounter">10</span> Pasang)</div>
+                <div class="match-instruction">Ketik/Tap panel KIRI, lalu tap pasangannya di panel KANAN!</div>
+                <div class="match-arena">
+                    <div class="match-col" id="col-left"></div>
+                    <div class="match-col" id="col-right"></div>
+                </div>
+            </div>
+
+            <div class="stage-container" id="stage-result">
+                <div class="result-box">
+                    <h3>PENCAPAIAN MISI</h3>
+                    <div class="result-score" id="finalScore">100</div>
+                    <div class="result-rank" id="finalRank">KAPTEN KOSMIK</div>
+                    <div class="result-desc" id="finalDesc">Luar biasa! Anda menguasai seluruh tata surya!</div>
+                    <button class="btn-primary" onclick="window.location.href='menu.html'">Kembali ke Ruang Kemudi</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- DATA SOAL PILIHAN GANDA ---
+        const dataPilgan = [
+            { q: "Apa sebutan lapisan atmosfer terluar Matahari yang terlihat seperti mahkota putih berkilau saat gerhana total?", opts: ["Fotosfer", "Korona", "Kromosfer", "Inti"], ans: 1 },
+            { q: "Berapa lama waktu yang dibutuhkan cahaya matahari untuk menempuh jarak 150 juta km sampai ke mata kita di Bumi?", opts: ["1 Detik", "1 Jam", "8 Menit 20 Detik", "24 Jam"], ans: 2 },
+            { q: "Alasan utama Pluto diturunkan statusnya menjadi 'Planet Kerdil' pada tahun 2006 adalah karena ia...", opts: ["Ukurannya terlalu kecil", "Tidak mengorbit Matahari", "Kehilangan gravitasinya", "Belum membersihkan jalur orbitnya dari benda angkasa lain"], ans: 3 },
+            { q: "Planet kerdil apa yang ditemukan tahun 2005, massanya lebih berat dari Pluto, dan memicu perdebatan status Pluto?", opts: ["Ceres", "Eris", "Makemake", "Haumea"], ans: 1 },
+            { q: "Komet sering dijuluki oleh para astronom sebagai...", opts: ["Bintang Jatuh", "Bola Salju Kotor", "Batu Berapi", "Planet Terbuang"], ans: 1 },
+            { q: "Perhatikan pergerakan komet! Ekor komet di tata surya akan selalu...", opts: ["Mengikuti arah gerak komet", "Menghadap ke Bumi", "Menjauhi Matahari", "Mengarah ke Matahari"], ans: 2 },
+            { q: "Fase bulan apa yang terjadi saat posisi Bumi berada tepat di antara Matahari dan Bulan dalam satu garis?", opts: ["Bulan Baru (New Moon)", "Bulan Sabit", "Bulan Separuh", "Bulan Purnama (Full Moon)"], ans: 3 },
+            { q: "Pergerakan Bumi berputar pada porosnya yang menyebabkan terjadinya Siang dan Malam disebut...", opts: ["Revolusi", "Rotasi", "Gravitasi", "Orbit"], ans: 1 },
+            { q: "Saat Bulan masuk sepenuhnya ke dalam bayangan inti Bumi (Umbra), maka akan terjadi...", opts: ["Gerhana Matahari Cincin", "Gerhana Bulan Sebagian", "Gerhana Bulan Total (Blood Moon)", "Bulan Sabit Emas"], ans: 2 },
+            { q: "Titik bayangan inti yang paling gelap dan pekat saat terjadinya proses gerhana disebut...", opts: ["Penumbra", "Umbra", "Korona", "Kawah"], ans: 1 }
+        ];
+
+        // --- DATA SOAL MENJODOHKAN ---
+        const dataMatch = [
+            { id: 1, left: "15.000.000 °C", right: "Suhu Inti Matahari" },
+            { id: 2, left: "Hidrogen & Helium", right: "Komposisi Utama Matahari" },
+            { id: 3, left: "Sabuk Kuiper", right: "Wilayah Gelap Tempat Pluto Berada" },
+            { id: 4, left: "Komet Halley", right: "Muncul Terlihat Tiap 76 Tahun" },
+            { id: 5, left: "Angin Surya", right: "Meniup Ekor Komet Menjauhi Matahari" },
+            { id: 6, left: "Waxing Crescent", right: "Fase Bulan Sabit Awal" },
+            { id: 7, left: "Rotasi Bumi", right: "Penyebab Terjadinya Siang & Malam" },
+            { id: 8, left: "Revolusi Bumi", right: "Waktu 1 Tahun Penuh (365 Hari)" },
+            { id: 9, left: "Penumbra", right: "Bayangan Luar Gerhana yang Lebih Terang" },
+            { id: 10, left: "150 Juta km (1 SA)", right: "Jarak Rata-rata Bumi ke Matahari" }
+        ];
+
+        // --- STATE & VARIABEL GLOBAL ---
+        let currentScore = 0;
+        let currentPilganIndex = 0;
+        let matchesLeft = 10;
+        
+        // State Menjodohkan
+        let selLeftBtn = null;
+        let selRightBtn = null;
+
+        // Sound Engine
+        const playSnd = (id) => { const s = document.getElementById(id); s.currentTime=0; s.play().catch(()=>{}); };
+
+        // --- FUNGSI ALUR KUIS ---
+        function setStage(stageId, title) {
+            document.querySelectorAll('.stage-container').forEach(el => el.classList.remove('active'));
+            document.getElementById(stageId).classList.add('active');
+            document.getElementById('stageTitle').innerText = title;
+        }
+
+        function updateScore(points) {
+            currentScore += points;
+            document.getElementById('scoreText').innerText = currentScore;
+            
+            // Animasi Roket Naik (Maksimal bottom 85% agar tidak keluar layar)
+            const altitude = Math.min((currentScore / 100) * 85, 85);
+            const roket = document.getElementById('rocketIcon');
+            roket.style.bottom = `${altitude + 5}%`;
+            
+            // Nyalakan api roket sebentar
+            roket.classList.add('flying');
+            document.getElementById('sndLaunch').volume = 0.3; playSnd('sndLaunch');
+            setTimeout(() => { roket.classList.remove('flying'); }, 1000);
+        }
+
+        function startQuiz() {
+            playSnd('sndClick');
+            setStage('stage-pilgan', '🚀 TAHAP 1: NAVIGASI');
+            loadPilgan();
+        }
+
+        // --- ENGINE PILIHAN GANDA ---
+        function loadPilgan() {
+            if (currentPilganIndex >= dataPilgan.length) {
+                // Selesai Pilgan, Lanjut Menjodohkan
+                setTimeout(() => {
+                    setStage('stage-match', '🛰️ TAHAP 2: SINKRONISASI');
+                    initMatching();
+                }, 1000);
+                return;
+            }
+
+            const qData = dataPilgan[currentPilganIndex];
+            document.getElementById('pilganCounter').innerText = currentPilganIndex + 1;
+            document.getElementById('pilganQuestion').innerText = qData.q;
+            
+            const optsContainer = document.getElementById('pilganOptions');
+            optsContainer.innerHTML = '';
+            
+            qData.opts.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerText = optText;
+                btn.onclick = () => checkPilgan(i, btn, qData.ans);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        function checkPilgan(selectedIndex, btnElem, correctIndex) {
+            // Kunci tombol agar tidak bisa diklik 2x
+            const allBtns = document.getElementById('pilganOptions').querySelectorAll('.btn-option');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            if (selectedIndex === correctIndex) {
+                btnElem.classList.add('correct');
+                playSnd('sndCorrect');
+                updateScore(5); // Benar +5 Poin
+            } else {
+                btnElem.classList.add('wrong');
+                allBtns[correctIndex].classList.add('correct'); // Tunjukkan yang benar
+                playSnd('sndWrong');
+            }
+
+            currentPilganIndex++;
+            setTimeout(loadPilgan, 1500);
+        }
+
+        // --- ENGINE MENJODOHKAN (TAP-TO-MATCH) ---
+        function shuffle(array) { return array.sort(() => Math.random() - 0.5); }
+
+        function initMatching() {
+            const colLeft = document.getElementById('col-left');
+            const colRight = document.getElementById('col-right');
+            colLeft.innerHTML = ''; colRight.innerHTML = '';
+
+            // Buat array acak untuk kiri dan kanan
+            let leftItems = shuffle([...dataMatch]);
+            let rightItems = shuffle([...dataMatch]);
+
+            leftItems.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'btn-match'; btn.innerText = item.left; btn.dataset.id = item.id;
+                btn.onclick = () => handleMatchClick('left', btn);
+                colLeft.appendChild(btn);
+            });
+
+            rightItems.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = 'btn-match'; btn.innerText = item.right; btn.dataset.id = item.id;
+                btn.onclick = () => handleMatchClick('right', btn);
+                colRight.appendChild(btn);
+            });
+        }
+
+        function handleMatchClick(side, btn) {
+            playSnd('sndClick');
+
+            if (side === 'left') {
+                if(selLeftBtn) selLeftBtn.classList.remove('selected');
+                selLeftBtn = btn;
+                selLeftBtn.classList.add('selected');
+            } else {
+                if(selRightBtn) selRightBtn.classList.remove('selected');
+                selRightBtn = btn;
+                selRightBtn.classList.add('selected');
+            }
+
+            // Jika keduanya sudah dipilih, lakukan pengecekan
+            if (selLeftBtn && selRightBtn) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const id1 = selLeftBtn.dataset.id;
+            const id2 = selRightBtn.dataset.id;
+
+            if (id1 === id2) {
+                // Cocok!
+                playSnd('sndCorrect');
+                selLeftBtn.classList.replace('selected', 'matched');
+                selRightBtn.classList.replace('selected', 'matched');
+                updateScore(5); // +5 poin
+                
+                matchesLeft--;
+                document.getElementById('matchCounter').innerText = matchesLeft;
+
+                if (matchesLeft === 0) {
+                    setTimeout(showResult, 1000); // Kuis Selesai!
+                }
+            } else {
+                // Salah!
+                playSnd('sndWrong');
+                selLeftBtn.classList.remove('selected'); selLeftBtn.classList.add('error');
+                selRightBtn.classList.remove('selected'); selRightBtn.classList.add('error');
+                
+                // Hilangkan error class setelah animasi getar selesai
+                const tempLeft = selLeftBtn, tempRight = selRightBtn;
+                setTimeout(() => {
+                    tempLeft.classList.remove('error'); tempRight.classList.remove('error');
+                }, 400);
+            }
+
+            // Reset seleksi
+            selLeftBtn = null; selRightBtn = null;
+        }
+
+        // --- HASIL AKHIR ---
+        function showResult() {
+            setStage('stage-result', '🌟 EVALUASI SELESAI');
+            document.getElementById('finalScore').innerText = currentScore;
+            
+            const rankElem = document.getElementById('finalRank');
+            const descElem = document.getElementById('finalDesc');
+
+            if (currentScore >= 95) {
+                rankElem.innerText = "KAPTEN KOSMIK 🚀"; rankElem.style.color = "var(--neon-cyan)";
+                descElem.innerText = "Sempurna! Anda adalah master Tata Surya sejati!";
+            } else if (currentScore >= 70) {
+                rankElem.innerText = "PENJELAJAH GALAKSI 🛸"; rankElem.style.color = "var(--neon-green)";
+                descElem.innerText = "Sangat bagus! Pemahaman astronomi Anda sangat solid.";
+            } else if (currentScore >= 40) {
+                rankElem.innerText = "NAVIGATOR BINTANG 🔭"; rankElem.style.color = "var(--neon-orange)";
+                descElem.innerText = "Kerja bagus! Sedikit latihan lagi untuk menguasai roket ini.";
+            } else {
+                rankElem.innerText = "KADET PEMULA 👨‍🚀"; rankElem.style.color = "var(--neon-red)";
+                descElem.innerText = "Roket masih di atmosfer bawah. Mari pelajari lagi arsip Sektor!";
+            }
+        }
+    </script>
+</body>
+</html>

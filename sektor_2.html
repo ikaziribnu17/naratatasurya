@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Sektor 2 - Sistem Tata Surya</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        /* --- DESKTOP 16:9 MODE (Kunci Scroll Body) --- */
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.5; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.05) translate(-2%, 2%); }
+        }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1600px; height: 92vh;
+            display: flex; flex-direction: row; gap: 3vw;
+            padding: 2vh 0;
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- KIRI: PANEL KENDALI (Navigasi Tab & VO) --- */
+        .left-panel { 
+            flex: 0.38; display: flex; flex-direction: column; 
+            height: 100%; gap: 2.5vh; 
+        }
+
+        .sector-title {
+            font-family: var(--font-heading); font-size: clamp(2rem, 3.5vw, 4rem);
+            color: var(--neon-cyan); text-transform: uppercase; line-height: 1.1;
+            text-shadow: var(--cyan-glow); flex-shrink: 0;
+            border-bottom: 2px dashed rgba(0, 242, 255, 0.3); padding-bottom: 1.5vh;
+        }
+        
+        /* Sub-Menu Tabs (Glassmorphism) */
+        .tab-menu { display: flex; flex-direction: column; gap: 1.5vh; flex-shrink: 0; }
+        .tab-btn {
+            background: rgba(0, 242, 255, 0.05); border: 2px solid rgba(0, 242, 255, 0.3);
+            color: #cbd5e1; font-family: var(--font-heading); font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+            padding: 2vh 2vw; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; text-align: left; letter-spacing: 1px;
+            display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .tab-btn:hover { border-color: var(--neon-cyan); color: #fff; transform: translateX(5px); box-shadow: var(--cyan-glow);}
+        
+        .tab-btn.active { 
+            background: rgba(0, 242, 255, 0.15); border-color: var(--neon-cyan); 
+            color: var(--neon-cyan); text-shadow: var(--cyan-glow); box-shadow: var(--cyan-glow);
+        }
+        .tab-btn.active::after { 
+            content: '● ONLINE'; font-size: clamp(0.8rem, 1.2vw, 1rem); 
+            background: var(--neon-cyan); color: var(--space-blue); 
+            padding: 4px 10px; border-radius: 8px; text-shadow: none; font-weight: 700;
+        }
+
+        /* VO Box */
+        .vo-box {
+            background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 153, 0, 0.3); border-left: 6px solid var(--neon-orange);
+            padding: 2vh 1.5vw; border-radius: 12px; 
+            font-family: var(--font-body); font-size: clamp(1.1rem, 1.5vw, 1.5rem); 
+            color: #E2E8F0; line-height: 1.5;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+        .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
+
+        /* Tombol Kembali */
+        .btn-nav {
+            margin-top: auto; background: rgba(0, 242, 255, 0.1); 
+            border: 2px solid var(--neon-cyan); color: var(--neon-cyan); 
+            font-family: var(--font-heading); font-size: clamp(1.1rem, 1.6vw, 1.6rem); 
+            padding: 2vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-nav svg { width: clamp(20px, 2vw, 25px); height: clamp(20px, 2vw, 25px); fill: var(--neon-cyan); transition: 0.3s; }
+        .btn-nav:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-5px);}
+        .btn-nav:hover svg { fill: var(--space-blue); transform: translateX(-5px); }
+
+        /* --- KANAN: PANEL LAYAR UTAMA (Konten Dinamis) --- */
+        .right-panel {
+            flex: 0.62; position: relative;
+            background: rgba(11, 13, 23, 0.7); border: 2px solid rgba(0, 242, 255, 0.3);
+            border-radius: 20px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+            overflow: hidden; backdrop-filter: blur(5px);
+        }
+
+        /* Area Konten (Memiliki Scroll Sendiri Anti-Terpotong) */
+        .view-content { 
+            display: none; width: 100%; height: 100%; position: absolute; 
+            top: 0; left: 0; padding: 4vh 3vw; 
+            overflow-y: auto; /* Kunci Anti-Terpotong */
+        }
+        .view-content.active { display: flex; flex-direction: column; animation: fadeInView 0.5s ease-out; }
+        @keyframes fadeInView { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar Internal */
+        .view-content::-webkit-scrollbar { width: 10px; }
+        .view-content::-webkit-scrollbar-track { background: rgba(0, 242, 255, 0.05); border-radius: 10px; }
+        .view-content::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; box-shadow: var(--cyan-glow); }
+
+        /* --- VIEW 1: RADAR NAVIGASI --- */
+        #view-radar { align-items: center; justify-content: center; background: radial-gradient(circle, rgba(0, 242, 255, 0.1) 0%, transparent 60%); overflow: hidden;}
+        .radar-grid { 
+            position: relative; width: 100%; max-width: clamp(300px, 45vh, 600px); aspect-ratio: 1/1; 
+            border-radius: 50%; border: 2px solid rgba(0,242,255,0.4); 
+            box-shadow: 0 0 40px rgba(0,242,255,0.2), inset 0 0 50px rgba(0,242,255,0.1); 
+            display: flex; align-items: center; justify-content: center; 
+        }
+        
+        .radar-sweep { 
+            position: absolute; width: 50%; height: 2px; 
+            background: linear-gradient(90deg, transparent, var(--neon-cyan)); 
+            top: 50%; left: 50%; transform-origin: left center; 
+            animation: sweep 4s linear infinite; z-index: 5; 
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+        @keyframes sweep { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(360deg); } }
+        
+        .sun-center { 
+            position: absolute; width: clamp(20px, 4vh, 45px); height: clamp(20px, 4vh, 45px); 
+            background: var(--neon-orange); border-radius: 50%; 
+            box-shadow: var(--orange-glow); z-index: 10; 
+            animation: pulseSun 2s infinite alternate;
+        }
+        @keyframes pulseSun { from { transform: scale(1); box-shadow: 0 0 15px var(--neon-orange); } to { transform: scale(1.2); box-shadow: 0 0 30px var(--neon-orange); } }
+        
+        .orbit-ring { position: absolute; border: 1px dashed rgba(0,242,255,0.2); border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;}
+        
+        .planet-dot { 
+            position: absolute; width: clamp(15px, 2.5vh, 30px); height: clamp(15px, 2.5vh, 30px); 
+            border-radius: 50%; cursor: pointer; z-index: 15; 
+            transform: translate(-50%, -50%); transition: 0.3s; 
+            box-shadow: 0 0 10px rgba(255,255,255,0.3); 
+        }
+        .planet-dot:hover { transform: translate(-50%, -50%) scale(1.8); z-index: 20;}
+        
+        .visited-mark { 
+            position: absolute; top: -10px; right: -10px; font-size: clamp(10px, 1.5vh, 16px); 
+            background: var(--neon-green); border-radius: 50%; width: clamp(15px, 2.5vh, 25px); height: clamp(15px, 2.5vh, 25px); 
+            display: none; align-items: center; justify-content: center; color: #000; font-weight: bold; 
+            box-shadow: var(--green-glow);
+        }
+        .planet-dot.visited .visited-mark { display: flex; }
+
+        /* Kotak Info Radar */
+        .radar-info-box {
+            margin-top: 4vh; padding: 2vh 3vw; border-radius: 15px;
+            background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); font-family: var(--font-heading); font-size: clamp(1.2rem, 2vw, 1.8rem);
+            text-align: center; min-width: 300px; box-shadow: var(--cyan-glow);
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- VIEW 2 & 3: GRID PLANET DALAM & LUAR --- */
+        .view-title { 
+            font-family: var(--font-heading); font-size: clamp(1.8rem, 3vw, 3rem); 
+            text-align: center; margin-bottom: 1vh; text-transform: uppercase; 
+            letter-spacing: 2px;
+        }
+        .title-inner { color: var(--neon-orange); text-shadow: var(--orange-glow); }
+        .title-outer { color: var(--neon-cyan); text-shadow: var(--cyan-glow); }
+
+        .sub-desc { text-align:center; margin-bottom:3vh; color: #cbd5e1; font-size: clamp(1rem, 1.5vw, 1.3rem); }
+
+        .grid-cards { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5vh 2vw; width: 100%; 
+            padding-bottom: 2vh; /* Extra space for scrolling */
+        }
+        
+        /* Desain Kartu Planet (Glassmorphism) */
+        .planet-card { 
+            background: rgba(45, 27, 78, 0.5); border: 2px solid rgba(255, 255, 255, 0.1); 
+            border-radius: 20px; padding: 3vh 2vw; cursor: pointer; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: 0.3s; 
+            position: relative; overflow: hidden; backdrop-filter: blur(5px);
+        }
+        .planet-card:hover { transform: translateY(-5px); background: rgba(45, 27, 78, 0.8);}
+        
+        .planet-card h3 { 
+            font-family: var(--font-heading); font-size: clamp(1.5rem, 2vw, 2.2rem); 
+            color: #fff; margin-bottom: 1vh; display: flex; align-items: center; gap: 10px;
+            transition: 0.3s;
+        }
+        
+        /* Area Spesifikasi Tersembunyi */
+        .card-specs { 
+            max-height: 0; opacity: 0; overflow: hidden; 
+            transition: all 0.4s ease-out; margin-top: 0;
+            background: rgba(0, 0, 0, 0.3); border-radius: 12px; 
+            color: #e2e8f0; font-size: clamp(1rem, 1.4vw, 1.3rem); line-height: 1.6; 
+        }
+        
+        /* Kartu Aktif saat Diklik */
+        .planet-card.revealed { background: rgba(0, 0, 0, 0.6); }
+        .planet-card.revealed .card-specs { 
+            max-height: 500px; opacity: 1; margin-top: 2vh; padding: 2vh 1.5vw; 
+            border-left: 3px solid #fff; 
+        }
+        
+        /* Warna Glow Spesifik */
+        .planet-card.terestrial.revealed { border-color: var(--neon-orange); box-shadow: var(--orange-glow); }
+        .planet-card.terestrial.revealed h3 { color: var(--neon-orange); }
+        .planet-card.terestrial.revealed .card-specs { border-left-color: var(--neon-orange); }
+        
+        .planet-card.jovian.revealed { border-color: var(--neon-cyan); box-shadow: var(--cyan-glow); }
+        .planet-card.jovian.revealed h3 { color: var(--neon-cyan); }
+        .planet-card.jovian.revealed .card-specs { border-left-color: var(--neon-cyan); }
+
+        /* --- RESPONSIVE MOBILE & TABLET --- */
+        @media (max-width: 1024px) {
+            body { height: auto; min-height: 100vh; overflow-y: auto; align-items: flex-start; padding: 30px 0; }
+            .main-wrapper { flex-direction: column; width: 95%; height: auto; margin: 0 auto; gap: 30px; padding: 20px;}
+            .left-panel, .right-panel { flex: none; width: 100%; height: auto; }
+            .right-panel { min-height: 60vh; overflow: visible;}
+            
+            /* Pada HP/Tablet, area scroll diserahkan kembali ke body */
+            .view-content { position: relative; height: auto; overflow-y: visible; padding: 20px 10px;}
+            
+            .grid-cards { grid-template-columns: 1fr; gap: 20px; }
+            .radar-grid { max-width: 350px; margin: 0 auto;}
+            
+            .sector-title { font-size: 3rem; text-align: center; }
+            .tab-btn { justify-content: center; text-align: center; font-size: 1.2rem;}
+        }
+
+        @media (max-width: 600px) {
+            .sector-title { font-size: 2.2rem; }
+            .tab-btn { font-size: 1.1rem; }
+            .vo-box { font-size: 1.1rem; }
+            .btn-nav { font-size: 1.1rem; }
+            .planet-card h3 { font-size: 1.5rem; }
+            .card-specs { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioRadar" src="https://www.soundjay.com/buttons/sounds/beep-07.mp3"></audio>
+    <audio id="audioRadio" src="https://www.soundjay.com/communication/sounds/radio-static-1.mp3"></audio>
+    <audio id="audioWind" src="https://www.soundjay.com/nature/sounds/wind-howl-01.mp3" loop></audio>
+    <audio id="audioClick" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="audioScan" src="https://www.soundjay.com/buttons/sounds/button-09.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="left-panel">
+            <div class="sector-title">Sektor 02:<br>Tata Surya</div>
+            
+            <div class="tab-menu">
+                <button id="btn-tab-radar" class="tab-btn active" onclick="bukaTab('radar')">📡 1. Radar Navigasi</button>
+                <button id="btn-tab-inner" class="tab-btn" onclick="bukaTab('inner')">🌑 2. Planet Terestrial</button>
+                <button id="btn-tab-outer" class="tab-btn" onclick="bukaTab('outer')">🌪️ 3. Raksasa Gas</button>
+            </div>
+
+            <div class="vo-box">
+                <span id="vo-text">
+                    "Sistem radar aktif. Kapten <span class="highlight" id="namaKapten">[Kapten]</span>, klik pada salah satu titik di radar untuk mengidentifikasi nama planetnya!"
+                </span>
+            </div>
+
+            <button class="btn-nav" onclick="navigasi('menu 3 sektor.html')">
+                <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
+                KEMBALI KE MENU
+            </button>
+        </div>
+
+        <div class="right-panel">
+            
+            <div id="view-radar" class="view-content active">
+                <div class="radar-grid" id="radar-area">
+                    <div class="radar-sweep"></div>
+                    <div class="sun-center"></div>
+                </div>
+                
+                <div class="radar-info-box">
+                    TARGET: <span id="radar-target-name" style="color: #fff;">BELUM DIKETAHUI</span>
+                    <div style="font-size: clamp(0.9rem, 1.2vw, 1.2rem); margin-top: 10px; color: #fff;">
+                        TERPINDAI: <span id="scan-count" style="color: var(--neon-green); font-weight: bold; font-size: 1.2em;">0</span> / 8
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-inner" class="view-content">
+                <div class="view-title title-inner">Planet Dalam (Terestrial)</div>
+                <div class="sub-desc">Klik kartu untuk memindai spesifikasi planet!</div>
+                
+                <div class="grid-cards">
+                    <div class="planet-card terestrial" onclick="revealCard(this)">
+                        <h3>🌑 Merkurius</h3>
+                        <div class="card-specs">
+                            • Terkecil & Terdekat dengan Matahari.<br>
+                            • Suhu Ekstrem: 430°C siang, -180°C malam.<br>
+                            • Permukaan penuh kawah seperti Bulan kita.
+                        </div>
+                    </div>
+                    <div class="planet-card terestrial" onclick="revealCard(this)">
+                        <h3>🌕 Venus</h3>
+                        <div class="card-specs">
+                            • Planet Terpanas (Mencapai 471°C).<br>
+                            • Diselimuti awan gas beracun (Efek Rumah Kaca).<br>
+                            • Rotasi terbalik (Matahari terbit di Barat).
+                        </div>
+                    </div>
+                    <div class="planet-card terestrial" onclick="revealCard(this)">
+                        <h3>🌍 Bumi</h3>
+                        <div class="card-specs">
+                            • Satu-satunya planet dengan air dalam bentuk cair.<br>
+                            • Memiliki atmosfer yang kaya oksigen & nitrogen.<br>
+                            • Dilindungi oleh medan magnet kuat dari radiasi.
+                        </div>
+                    </div>
+                    <div class="planet-card terestrial" onclick="revealCard(this)">
+                        <h3>🔴 Mars</h3>
+                        <div class="card-specs">
+                            • Dijuluki Planet Merah karena oksida besi (karat).<br>
+                            • Memiliki gunung berapi tertinggi: Olympus Mons.<br>
+                            • Terdapat endapan es abadi di kutubnya.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-outer" class="view-content">
+                <div class="view-title title-outer">Planet Luar (Raksasa Gas)</div>
+                <div class="sub-desc">Klik kartu untuk memindai anomali raksasa gas!</div>
+                
+                <div class="grid-cards">
+                    <div class="planet-card jovian" onclick="revealCard(this)">
+                        <h3>🟠 Jupiter</h3>
+                        <div class="card-specs">
+                            • Planet Terbesar di seluruh Tata Surya.<br>
+                            • Terdapat "Bintik Merah Raksasa" (Badai abadi).<br>
+                            • Waktu rotasi paling cepat (1 hari = 10 jam).
+                        </div>
+                    </div>
+                    <div class="planet-card jovian" onclick="revealCard(this)">
+                        <h3>🪐 Saturnus</h3>
+                        <div class="card-specs">
+                            • Terkenal dengan Cincin Indah nan Megah.<br>
+                            • Cincin terbuat dari miliaran bongkahan es & debu.<br>
+                            • Kerapatan paling rendah (bisa mengapung di air).
+                        </div>
+                    </div>
+                    <div class="planet-card jovian" onclick="revealCard(this)">
+                        <h3>🔵 Uranus</h3>
+                        <div class="card-specs">
+                            • Planet Terdingin di Tata Surya (-224°C).<br>
+                            • Menggelinding! Sumbu rotasinya miring 98 derajat.<br>
+                            • Berwarna biru muda akibat gas metana di atmosfer.
+                        </div>
+                    </div>
+                    <div class="planet-card jovian" onclick="revealCard(this)">
+                        <h3>🌌 Neptunus</h3>
+                        <div class="card-specs">
+                            • Planet Terjauh dari tarikan Matahari.<br>
+                            • Badai sangat ekstrem (angin hingga 2.000 km/jam).<br>
+                            • Saudara kembar Uranus yang berwarna biru pekat.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Inisialisasi
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = astronotName.toUpperCase();
+            buatRadar();
+            putarAudio('audioRadar');
+        };
+
+        // --- SISTEM NAVIGASI TOMBOL KEMBALI ---
+        function navigasi(url) {
+            const sound = document.getElementById('audioClick');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        // --- SISTEM TAB & VO ---
+        const teksVO = {
+            radar: `"Sistem radar aktif. Kapten <span class="highlight">[Kapten]</span>, klik pada salah satu titik di radar untuk mengidentifikasi nama planetnya!"`,
+            inner: `"Empat planet pertama adalah Planet Terestrial. Padat, berbatu, dan berada dekat Matahari. Klik planet untuk spesifikasi lengkap."`,
+            outer: `"Melewati sabuk asteroid, kita menemukan Raksasa Gas (Jovian)! Ukurannya masif dan tidak memiliki pijakan padat. Klik untuk memindai."`
+        };
+
+        function bukaTab(tabId) {
+            document.getElementById('audioClick').play().catch(e=>{});
+            
+            // Reset Tabs & Views
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+            
+            // Activate target
+            document.getElementById(`btn-tab-${tabId}`).classList.add('active');
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            
+            // Update VO
+            let nama = localStorage.getItem('AstronotName') || 'Penjelajah';
+            let vo = teksVO[tabId].replace('[Kapten]', nama.toUpperCase());
+            document.getElementById('vo-text').innerHTML = vo;
+
+            // Audio Handler
+            hentikanSemuaAudio();
+            if(tabId === 'radar') putarAudio('audioRadar');
+            if(tabId === 'inner') putarAudio('audioRadio');
+            if(tabId === 'outer') putarAudio('audioWind');
+        }
+
+        function putarAudio(id) {
+            let aud = document.getElementById(id);
+            aud.volume = id === 'audioWind' ? 0.2 : 0.4;
+            aud.currentTime = 0; aud.play().catch(e=>{});
+        }
+        function hentikanSemuaAudio() {
+            document.getElementById('audioRadar').pause();
+            document.getElementById('audioRadio').pause();
+            document.getElementById('audioWind').pause();
+        }
+
+        // --- TEKNIS 1: GENERATE RADAR & IDENTIFIKASI NAMA ---
+        let planetVisited = 0;
+        const planetDataArray = [
+            { nama: "MERKURIUS", warna: "#A8B2C1" },
+            { nama: "VENUS", warna: "#E8C396" },
+            { nama: "BUMI", warna: "#3B82F6" },
+            { nama: "MARS", warna: "#EF4444" },
+            { nama: "JUPITER", warna: "#F59E0B" },
+            { nama: "SATURNUS", warna: "#FDE047" },
+            { nama: "URANUS", warna: "#38BDF8" },
+            { nama: "NEPTUNUS", warna: "#2563EB" }
+        ];
+
+        function buatRadar() {
+            const area = document.getElementById('radar-area');
+            const orbitSizes = [15, 25, 35, 45, 55, 65, 75, 85]; // Persentase radius orbit
+            
+            for(let i=0; i<8; i++) {
+                // Orbit Ring
+                let ring = document.createElement('div');
+                ring.className = 'orbit-ring';
+                ring.style.width = orbitSizes[i] + '%';
+                ring.style.height = orbitSizes[i] + '%';
+                area.appendChild(ring);
+
+                // Planet Dot
+                let planet = document.createElement('div');
+                planet.className = 'planet-dot';
+                planet.style.background = planetDataArray[i].warna;
+                planet.dataset.namaPlanet = planetDataArray[i].nama;
+                
+                let angle = Math.random() * Math.PI * 2;
+                let radiusPercent = orbitSizes[i] / 2;
+                planet.style.left = (50 + radiusPercent * Math.cos(angle)) + '%';
+                planet.style.top = (50 + radiusPercent * Math.sin(angle)) + '%';
+                
+                let check = document.createElement('div');
+                check.className = 'visited-mark';
+                check.innerHTML = '✔';
+                planet.appendChild(check);
+
+                // Interaksi Klik Radar
+                planet.onclick = function() {
+                    document.getElementById('audioScan').currentTime = 0;
+                    document.getElementById('audioScan').play().catch(e=>{});
+                    
+                    let targetText = document.getElementById('radar-target-name');
+                    targetText.innerText = this.dataset.namaPlanet;
+                    targetText.style.color = this.style.background;
+                    targetText.style.textShadow = `0 0 10px ${this.style.background}`;
+
+                    if(!this.classList.contains('visited')) {
+                        this.classList.add('visited');
+                        planetVisited++;
+                        document.getElementById('scan-count').innerText = planetVisited;
+                        this.style.boxShadow = `0 0 20px ${this.style.background}`;
+                        this.style.border = `2px solid #fff`;
+                    }
+                };
+                
+                area.appendChild(planet);
+            }
+        }
+
+        // --- TEKNIS 2: CLICK AND REVEAL KARTU PLANET ---
+        function revealCard(el) {
+            document.getElementById('audioClick').currentTime = 0;
+            document.getElementById('audioClick').play().catch(e=>{});
+            
+            // Tutup semua kartu lain di dalam grid yang sama
+            let parentGrid = el.parentElement;
+            parentGrid.querySelectorAll('.planet-card').forEach(card => card.classList.remove('revealed'));
+            
+            // Buka kartu yang diklik
+            el.classList.add('revealed');
+        }
+    </script>
+</body>
+</html>

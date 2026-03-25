@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Sektor 3 - Anatomi Komet</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --green-glow: 0 0 15px rgba(0, 230, 118, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            
+            /* KUNCI LAYAR PC & FLAT PANEL: 100% Layar Tanpa Scroll Body */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.5; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.05) translate(-2%, 2%); }
+        }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA (Split Layout 16:9) --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1800px; 
+            height: 94vh; /* Ditingkatkan sedikit agar lebih lega */
+            display: flex; flex-direction: row; gap: 3vw;
+            animation: fadeIn 0.8s ease-out;
+            padding: 2vh 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- KIRI: PANEL TEKS (45% Lebar) --- */
+        .left-panel {
+            flex: 0.45;
+            display: flex; flex-direction: column; justify-content: space-between; 
+            height: 100%; gap: 1.5vh; /* Gap dikurangi agar ruang kotak detail lebih besar */
+        }
+        
+        .sector-title {
+            font-family: var(--font-heading); 
+            font-size: clamp(2rem, 3.2vw, 4rem); 
+            font-weight: 700; color: var(--neon-cyan); text-transform: uppercase; 
+            line-height: 1; text-shadow: var(--cyan-glow); 
+            flex-shrink: 0; margin-bottom: 0;
+        }
+        
+        /* Kotak Intro & Definisi */
+        .vo-box {
+            background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 242, 255, 0.3); border-left: 6px solid var(--neon-cyan);
+            padding: 1.5vh 1.5vw; border-radius: 12px; 
+            font-family: var(--font-body); 
+            font-size: clamp(0.85rem, 1.2vw, 1.2rem); /* Ukuran font disesuaikan */
+            color: #E2E8F0; line-height: 1.5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(0, 242, 255, 0.05);
+            flex-shrink: 0;
+        }
+        .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
+
+        /* Kotak Detail Anatomi Komet */
+        .detail-box {
+            flex: 1; 
+            background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan); border-radius: 20px; 
+            padding: 2vh 2vw; /* Padding dikurangi sedikit */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(0, 242, 255, 0.1);
+            display: flex; flex-direction: column; 
+            justify-content: flex-start; /* Dimulai dari atas agar tidak mendesak */
+            overflow: hidden; 
+        }
+
+        .layer-name { 
+            font-family: var(--font-heading); 
+            font-size: clamp(1.4rem, 2.2vw, 2.5rem); /* Diturunkan sedikit */
+            color: var(--neon-orange); margin-bottom: 1vh; text-transform: uppercase; 
+            border-bottom: 2px dashed rgba(255, 153, 0, 0.3); padding-bottom: 0.5vh;
+            text-shadow: var(--orange-glow); flex-shrink: 0;
+        }
+        
+        .layer-desc { 
+            font-size: clamp(0.9rem, 1.2vw, 1.3rem); /* Ukuran optimal agar muat */
+            line-height: 1.5; font-weight: 400; color: #F8FAFC; 
+            overflow: visible; 
+        }
+        
+        .layer-stat { 
+            margin-top: 1.5vh; display: inline-block; background: rgba(0, 230, 118, 0.1); 
+            padding: 1vh 1.2vw; border-radius: 10px; font-family: var(--font-heading); 
+            color: var(--neon-green); 
+            font-size: clamp(0.85rem, 1.1vw, 1.2rem); /* Diturunkan sedikit */
+            border: 2px solid var(--neon-green); box-shadow: var(--green-glow); 
+            align-self: flex-start; letter-spacing: 1px; flex-shrink: 0;
+        }
+
+        /* Navigasi Bawah */
+        .nav-container {
+            display: flex; gap: 2vh; flex-direction: row; margin-top: auto; flex-shrink: 0;
+        }
+        
+        .btn-nav {
+            flex: 1; background: rgba(0, 242, 255, 0.1); 
+            border: 2px solid var(--neon-cyan); color: var(--neon-cyan); 
+            font-family: var(--font-heading); 
+            font-size: clamp(0.9rem, 1.2vw, 1.3rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-nav svg { width: clamp(18px, 1.5vw, 22px); height: clamp(18px, 1.5vw, 22px); transition: 0.3s; }
+        
+        .btn-nav.back { fill: var(--neon-cyan); }
+        .btn-nav.back:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-5px);}
+        .btn-nav.back:hover svg { fill: var(--space-blue); transform: translateX(-5px); }
+
+        .btn-nav.next { border-color: var(--neon-orange); color: var(--neon-orange); fill: var(--neon-orange); background: rgba(255, 153, 0, 0.1);}
+        .btn-nav.next:hover { background: var(--neon-orange); color: var(--space-blue); box-shadow: var(--orange-glow); transform: translateY(-5px);}
+        .btn-nav.next:hover svg { fill: var(--space-blue); transform: translateX(5px); }
+
+        /* --- KANAN: PANEL VISUAL KOMET (55% Lebar) --- */
+        .right-panel {
+            flex: 0.55; position: relative;
+            background: rgba(11, 13, 23, 0.6); border: 2px solid rgba(0, 242, 255, 0.2);
+            border-radius: 25px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; backdrop-filter: blur(5px);
+        }
+
+        /* SVG Komet */
+        .comet-container {
+            width: 100%; height: 100%; position: absolute;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .comet-part { transition: all 0.3s ease; cursor: pointer; transform-origin: center;}
+        .comet-part:hover { filter: brightness(1.3); transform: scale(1.05); }
+
+        .comet-container.active-layer .comet-part { opacity: 0.4; }
+        
+        .comet-container.active-layer .comet-part.highlighted { 
+            opacity: 1; 
+            filter: drop-shadow(0 0 30px var(--neon-cyan)); 
+        }
+        .comet-container.active-layer #part-ekor.highlighted {
+            filter: drop-shadow(0 0 30px var(--neon-orange)); 
+        }
+
+        /* Hotspots (Panel Tombol di Pojok Kanan) */
+        .hotspot-container { 
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; 
+            z-index: 10; pointer-events: none; 
+        }
+        
+        .hotspot {
+            position: absolute; pointer-events: auto;
+            background: rgba(11, 13, 23, 0.8); border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); font-family: var(--font-heading); 
+            font-size: clamp(0.85rem, 1.1vw, 1.2rem); font-weight: 600; letter-spacing: 1px;
+            padding: 1vh 1.2vw; border-radius: 10px; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.3s; backdrop-filter: blur(5px);
+        }
+        
+        .hotspot:hover { background: rgba(0, 242, 255, 0.2); transform: translateY(-3px); box-shadow: var(--cyan-glow); }
+        
+        .hotspot.active { 
+            background: var(--neon-cyan); color: var(--space-blue); 
+            box-shadow: var(--cyan-glow); transform: scale(1.05); 
+        }
+        
+        #btn-kepala { top: 20%; left: 15%; }
+        #btn-ekor { top: 20%; right: 15%; border-color: var(--neon-orange); color: var(--neon-orange); }
+        #btn-ekor:hover { background: rgba(255, 153, 0, 0.2); box-shadow: var(--orange-glow); }
+        #btn-ekor.active { background: var(--neon-orange); color: var(--space-blue); box-shadow: var(--orange-glow); }
+
+        /* Matahari Angin Surya (Hiasan) */
+        .solar-wind {
+            position: absolute; bottom: 10%; left: -20px; font-size: clamp(2rem, 4vw, 3rem);
+            animation: pulseWind 2s infinite alternate; text-shadow: var(--orange-glow);
+            display: flex; align-items: center; gap: 10px; color: var(--neon-orange);
+            font-family: var(--font-heading); font-size: clamp(0.9rem, 1.1vw, 1.3rem);
+            pointer-events: none; opacity: 0.8;
+        }
+        @keyframes pulseWind { from { transform: translateX(0); opacity: 0.5;} to { transform: translateX(20px); opacity: 1;} }
+
+        /* --- RESPONSIVE MOBILE & TABLET (Mode Portrait) --- */
+        @media (max-width: 1024px) {
+            body { 
+                height: auto; min-height: 100vh; 
+                overflow-y: auto; 
+                align-items: flex-start; padding: 20px 0;
+            }
+            .main-wrapper { 
+                flex-direction: column; width: 95%; height: auto; 
+                margin: 0 auto; gap: 20px; padding: 15px; overflow: visible;
+            }
+            .left-panel, .right-panel { flex: none; width: 100%; height: auto; }
+            .right-panel { height: 45vh; min-height: 350px; margin-bottom: 20px; }
+            
+            .sector-title { font-size: 2.8rem; text-align: center; }
+            .nav-container { flex-direction: column; }
+            
+            .hotspot { font-size: 1.1rem; padding: 10px 20px; }
+            #btn-kepala { top: 10%; left: 5%; } #btn-ekor { top: 10%; right: 5%; }
+        }
+
+        @media (max-width: 600px) {
+            .sector-title { font-size: 2.2rem; }
+            .vo-box, .layer-desc, .layer-stat { font-size: 1rem; }
+            .layer-name { font-size: 1.5rem; }
+            .btn-nav { font-size: 1.1rem; padding: 15px 0;}
+            .hotspot { font-size: 0.9rem; padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioHum" src="https://www.soundjay.com/nature/sounds/space-drone-1.mp3" loop autoplay></audio>
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="left-panel">
+            <h1 class="sector-title">☄️ Komet</h1>
+            
+            <div class="vo-box">
+                Halo <span id="namaKapten" class="highlight">[Kapten]</span>! Komet sering dijuluki <b>"Bola Salju Kotor"</b>. Ia adalah sisa-sisa pembentukan tata surya yang terbuat dari debu, batu, dan es.<br>
+                <b>Contoh:</b> Komet Halley, Hale-Bopp, dan Encke.
+            </div>
+
+            <div id="infoBox" class="detail-box">
+                <div id="infoName" class="layer-name" style="color: var(--neon-cyan); border-color: rgba(0, 242, 255, 0.3); text-shadow: var(--cyan-glow);">MENUNGGU INPUT...</div>
+                <div id="infoDesc" class="layer-desc">Klik bagian tubuh komet pada radar visual di sebelah kanan untuk memindai anatomi dan rahasia ekornya!</div>
+                <div id="infoStat" class="layer-stat" style="display:none;"></div>
+            </div>
+
+            <div class="nav-container">
+                <button class="btn-nav back" onclick="navigasi('menu 3 sektor.html')">
+                    <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
+                    KEMBALI MENU
+                </button>
+                <button class="btn-nav next" onclick="navigasi('sektor_3 halaman meteor.html')">
+                    BEDAH METEOR
+                    <svg viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            
+            <div class="solar-wind">
+                <span>🌞 💨 Angin Surya</span>
+            </div>
+
+            <div id="cometGraphic" class="comet-container">
+                <svg viewBox="0 0 800 600" width="100%" height="100%">
+                    <defs>
+                        <linearGradient id="gradEkor" x1="20%" y1="50%" x2="100%" y2="50%">
+                            <stop offset="0%" stop-color="rgba(255, 153, 0, 0.9)"/>
+                            <stop offset="50%" stop-color="rgba(255, 51, 102, 0.5)"/>
+                            <stop offset="100%" stop-color="rgba(11, 13, 23, 0)"/>
+                        </linearGradient>
+                        
+                        <radialGradient id="gradKoma" cx="50%" cy="50%" r="50%">
+                            <stop offset="10%" stop-color="#FFFFFF"/>
+                            <stop offset="40%" stop-color="#00F2FF"/>
+                            <stop offset="100%" stop-color="rgba(0, 242, 255, 0)"/>
+                        </radialGradient>
+                    </defs>
+
+                    <path id="part-ekor" class="comet-part" d="M 280 250 L 750 150 L 780 300 L 700 450 L 280 350 Z" fill="url(#gradEkor)" onclick="bukaBagian('ekor')"/>
+                    
+                    <circle id="part-kepala" class="comet-part" cx="250" cy="300" r="100" fill="url(#gradKoma)" onclick="bukaBagian('kepala')"/>
+                    
+                    <circle cx="230" cy="300" r="15" fill="#CBD5E1" pointer-events="none" filter="drop-shadow(0 0 5px #000)"/>
+                </svg>
+            </div>
+
+            <div class="hotspot-container">
+                <button id="btn-kepala" class="hotspot" onclick="bukaBagian('kepala')">KEPALA (KOMA)</button>
+                <button id="btn-ekor" class="hotspot" onclick="bukaBagian('ekor')">EKOR DEBU & GAS</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = "KAPTEN " + astronotName.toUpperCase();
+            
+            // Atur volume BGM
+            const bgm = document.getElementById('audioHum');
+            if(bgm) bgm.volume = 0.1;
+        };
+
+        const dataKomet = {
+            kepala: {
+                nama: "💠 KEPALA (KOMA)",
+                color: "var(--neon-cyan)",
+                desc: "Inti komet (Nukleus) terbuat dari bongkahan es dan batuan. Saat mendekati Matahari, es ini menguap dan membentuk atmosfer bercahaya yang disebut <b>Koma</b>.",
+                stat: "Fakta: Koma bisa mengembang hingga lebih besar dari Jupiter!"
+            },
+            ekor: {
+                nama: "🔥 EKOR KOMET",
+                color: "var(--neon-orange)",
+                desc: "Jejak debu dan gas yang memanjang hingga jutaan kilometer. Angin Surya dari matahari meniup material ini dengan sangat kencang.",
+                stat: "Fakta: Ekor komet SELALU arahnya menjauhi Matahari!"
+            }
+        };
+
+        function bukaBagian(bagianId) {
+            // Mainkan SFX
+            const sound = document.getElementById('audioPop');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+
+            const cometGraphic = document.getElementById('cometGraphic');
+            const layerName = document.getElementById('infoName');
+            const layerStat = document.getElementById('infoStat');
+            
+            // Update Teks Panel Kiri
+            layerName.innerHTML = dataKomet[bagianId].nama;
+            layerName.style.color = dataKomet[bagianId].color;
+            layerName.style.borderBottomColor = dataKomet[bagianId].color;
+            layerName.style.textShadow = `0 0 15px ${dataKomet[bagianId].color}`;
+
+            document.getElementById('infoDesc').innerHTML = dataKomet[bagianId].desc;
+            
+            layerStat.innerHTML = dataKomet[bagianId].stat;
+            layerStat.style.color = dataKomet[bagianId].color;
+            layerStat.style.borderColor = dataKomet[bagianId].color;
+            layerStat.style.boxShadow = `0 0 15px ${dataKomet[bagianId].color}`;
+            layerStat.style.background = `rgba(${bagianId === 'kepala' ? '0, 242, 255' : '255, 153, 0'}, 0.1)`;
+            layerStat.style.display = "inline-block";
+
+            // Animasi & Highlight SVG
+            cometGraphic.className = "comet-container active-layer";
+            
+            document.querySelectorAll('.comet-part').forEach(el => el.classList.remove('highlighted'));
+            document.getElementById('part-' + bagianId).classList.add('highlighted');
+
+            // Reset Warna Hotspot
+            document.querySelectorAll('.hotspot').forEach(el => el.classList.remove('active'));
+            document.getElementById('btn-' + bagianId).classList.add('active');
+        }
+
+        function navigasi(url) {
+            const sound = document.getElementById('audioPop');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+    </script>
+</body>
+</html>

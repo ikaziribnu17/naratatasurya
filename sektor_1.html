@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Sektor 1 - Pengertian Matahari</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA STANDAR --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --pink-glow: 0 0 15px rgba(255, 51, 102, 0.6);
+            --green-glow: 0 0 15px rgba(0, 230, 118, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            
+            /* KUNCI LAYAR ANTI-TERPOTONG STANDAR BARU */
+            min-height: 100dvh;
+            width: 100vw;
+            overflow: hidden; 
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.4; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.05) translate(-2%, 2%); }
+        }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA (Split Layout 16:9) --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1800px; 
+            height: 94dvh; 
+            display: flex; flex-direction: row; gap: 3vw;
+            animation: fadeIn 0.8s ease-out;
+            padding: 2vh 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- KIRI: PANEL TEKS & MENU (40% Lebar) --- */
+        .left-panel {
+            flex: 0.40;
+            display: flex; flex-direction: column; justify-content: space-between; 
+            height: 100%; gap: 2vh; 
+        }
+        
+        .sector-title {
+            font-family: var(--font-heading); 
+            font-size: clamp(2rem, 3.2vw, 4rem); 
+            font-weight: 700; color: var(--neon-orange); text-transform: uppercase; 
+            line-height: 1.1; text-shadow: var(--orange-glow); 
+            flex-shrink: 0; margin-bottom: 0;
+        }
+        
+        /* Kotak Intro */
+        .vo-box {
+            background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 153, 0, 0.3); border-left: 6px solid var(--neon-orange);
+            padding: 2vh 1.5vw; border-radius: 12px; 
+            font-family: var(--font-body); 
+            font-size: clamp(0.95rem, 1.25vw, 1.4rem); 
+            color: #E2E8F0; line-height: 1.6;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(255, 153, 0, 0.05);
+            flex: 1; display: flex; flex-direction: column; justify-content: center;
+        }
+        .highlight { color: var(--neon-cyan); font-weight: 600; text-shadow: var(--cyan-glow);}
+
+        /* --- NAVIGASI STANDAR (POSISI TETAP DI BAWAH) --- */
+        .nav-container {
+            display: flex; gap: 2vh; flex-direction: row; margin-top: auto; flex-shrink: 0;
+        }
+        
+        .btn-nav {
+            flex: 1; background: rgba(0, 242, 255, 0.1); 
+            border: 2px solid var(--neon-cyan); color: var(--neon-cyan); 
+            font-family: var(--font-heading); 
+            font-size: clamp(0.9rem, 1.2vw, 1.3rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-nav svg { width: clamp(18px, 1.5vw, 22px); height: clamp(18px, 1.5vw, 22px); transition: 0.3s; }
+        
+        .btn-nav.back { fill: var(--neon-cyan); }
+        .btn-nav.back:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-3px);}
+        .btn-nav.back:hover svg { fill: var(--space-blue); transform: translateX(-5px); }
+
+        .btn-nav.next { border-color: var(--neon-orange); color: var(--neon-orange); fill: var(--neon-orange); background: rgba(255, 153, 0, 0.1);}
+        .btn-nav.next:hover { background: var(--neon-orange); color: var(--space-blue); box-shadow: var(--orange-glow); transform: translateY(-3px);}
+        .btn-nav.next:hover svg { fill: var(--space-blue); transform: translateX(5px); }
+
+        /* --- KANAN: PANEL GRID DATA MATAHARI (60% Lebar) --- */
+        .right-panel {
+            flex: 0.60; display: flex; flex-direction: column; 
+            padding-right: 1vw; overflow-y: auto; /* Internal Scroll jika penuh */
+        }
+        .right-panel::-webkit-scrollbar { width: 8px; }
+        .right-panel::-webkit-scrollbar-track { background: rgba(255, 153, 0, 0.05); border-radius: 10px; }
+        .right-panel::-webkit-scrollbar-thumb { background: var(--neon-orange); border-radius: 10px; }
+
+        .grid-cards { 
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 2vh 1.5vw; width: 100%; 
+            padding-bottom: 2vh; 
+        }
+
+        /* Kartu Data Interaktif (Glassmorphism) */
+        .data-card {
+            background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 15px; 
+            padding: 2.5vh 1.5vw; cursor: pointer; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: 0.3s;
+            display: flex; flex-direction: column;
+        }
+        .data-card:hover { transform: translateY(-5px); background: rgba(45, 27, 78, 0.9); border-color: var(--neon-orange); box-shadow: 0 10px 20px rgba(0,0,0,0.8), var(--orange-glow);}
+
+        .card-header {
+            display: flex; align-items: center; gap: 1vw;
+            font-family: var(--font-heading); font-size: clamp(1.2rem, 1.6vw, 1.8rem);
+            color: #fff; text-transform: uppercase; transition: 0.3s;
+        }
+        .card-icon { font-size: clamp(1.8rem, 2.5vw, 2.5rem); }
+
+        /* Area Data Tersembunyi (Akan Muncul Saat Diklik) */
+        .card-specs { 
+            max-height: 0; opacity: 0; overflow: hidden; 
+            transition: all 0.4s ease-out; margin-top: 0;
+            background: rgba(0, 0, 0, 0.4); border-radius: 10px; 
+            color: #e2e8f0; font-size: clamp(0.95rem, 1.2vw, 1.3rem); line-height: 1.5; 
+        }
+
+        /* State Saat Kartu Diklik (Revealed) */
+        .data-card.revealed { background: rgba(0, 0, 0, 0.7); border-color: var(--neon-cyan); box-shadow: var(--cyan-glow); }
+        .data-card.revealed .card-header { color: var(--neon-cyan); }
+        .data-card.revealed .card-specs { 
+            max-height: 300px; opacity: 1; margin-top: 1.5vh; padding: 1.5vh 1.5vw; 
+            border-left: 3px solid var(--neon-cyan); 
+        }
+
+        /* Pewarnaan Spesifik Kartu Aktif */
+        .data-card.c-orange.revealed { border-color: var(--neon-orange); box-shadow: var(--orange-glow); }
+        .data-card.c-orange.revealed .card-header { color: var(--neon-orange); text-shadow: var(--orange-glow);}
+        .data-card.c-orange.revealed .card-specs { border-left-color: var(--neon-orange); }
+
+        .data-card.c-green.revealed { border-color: var(--neon-green); box-shadow: var(--green-glow); }
+        .data-card.c-green.revealed .card-header { color: var(--neon-green); text-shadow: var(--green-glow);}
+        .data-card.c-green.revealed .card-specs { border-left-color: var(--neon-green); }
+
+        .data-card.c-pink.revealed { border-color: var(--neon-pink); box-shadow: var(--pink-glow); }
+        .data-card.c-pink.revealed .card-header { color: var(--neon-pink); text-shadow: var(--pink-glow);}
+        .data-card.c-pink.revealed .card-specs { border-left-color: var(--neon-pink); }
+
+        /* --- RESPONSIVE MOBILE & TABLET --- */
+        @media (max-width: 1024px) {
+            body { overflow-y: auto; align-items: flex-start; padding: 20px 0; }
+            .main-wrapper { flex-direction: column; width: 95%; height: auto; gap: 20px; padding: 15px; }
+            .left-panel, .right-panel { flex: none; width: 100%; height: auto; }
+            .right-panel { padding-right: 0; overflow: visible;}
+            .sector-title { text-align: center; }
+            .nav-container { flex-direction: column; margin-top: 20px;}
+            
+            .grid-cards { grid-template-columns: 1fr; gap: 15px; } /* Jadi 1 Kolom di HP */
+            .vo-box { min-height: 150px; }
+        }
+
+        @media (max-width: 600px) {
+            .sector-title { font-size: 2.5rem; }
+            .vo-box { font-size: 1rem; padding: 15px; }
+            .btn-nav { font-size: 1.1rem; padding: 15px 0;}
+            .card-header { font-size: 1.2rem; }
+            .card-specs { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioHum" src="https://www.soundjay.com/nature/sounds/space-drone-1.mp3" loop autoplay></audio>
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="left-panel">
+            <h1 class="sector-title">☀️ Sang Surya</h1>
+            
+            <div class="vo-box">
+                "Halo Kapten <span id="namaKapten" class="highlight">[Kapten]</span>! Tahukah Anda? Matahari bukanlah sebuah planet, melainkan sebuah <b>BINTANG</b> raksasa yang menyala di pusat tata surya kita.<br><br>
+                Silakan <b>klik kartu arsip data</b> di panel kanan untuk memindai spesifikasi dan rahasia Matahari!"
+            </div>
+
+            <div class="nav-container">
+                <button class="btn-nav back" onclick="navigasi('menu 3 sektor.html')">
+                    <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
+                    KEMBALI KE MENU
+                </button>
+                <button class="btn-nav next" onclick="navigasi('sektor_1 halaman lapisan matahari.html')">
+                    ANATOMI MATAHARI
+                    <svg viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            
+            <div class="grid-cards">
+                
+                <div class="data-card c-orange" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">📏</span> Ukuran & Massa
+                    </div>
+                    <div class="card-specs">
+                        Matahari luar biasa masif! Diameternya sekitar <b>1,39 juta km</b> (setara dengan 109 buah Bumi yang dijejerkan). Massa matahari mencakup <b>99,8%</b> dari total seluruh massa Tata Surya kita!
+                    </div>
+                </div>
+
+                <div class="data-card c-cyan" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">🚀</span> Jarak dari Bumi
+                    </div>
+                    <div class="card-specs">
+                        Jarak rata-rata Bumi ke Matahari adalah <b>150 juta kilometer</b> (sering disebut 1 Satuan Astronomi / SA). Saking jauhnya, cahaya matahari membutuhkan waktu sekitar <b>8 menit 20 detik</b> untuk sampai ke mata kita.
+                    </div>
+                </div>
+
+                <div class="data-card c-pink" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">🌡️</span> Suhu Ekstrem
+                    </div>
+                    <div class="card-specs">
+                        Suhu di bagian permukaan (Fotosfer) "hanya" sekitar <b>5.500 °C</b>. Namun, jika Anda masuk ke bagian intinya, suhunya melonjak gila-gilaan mencapai <b>15.000.000 °C</b> akibat reaksi fusi nuklir!
+                    </div>
+                </div>
+
+                <div class="data-card c-cyan" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">🧪</span> Komposisi Gas
+                    </div>
+                    <div class="card-specs">
+                        Matahari tidak memiliki daratan padat! Ia adalah bola gas raksasa yang terdiri dari <b>73% Hidrogen</b>, <b>25% Helium</b>, dan sisanya (2%) adalah elemen berat seperti Oksigen, Karbon, dan Besi.
+                    </div>
+                </div>
+
+                <div class="data-card c-orange" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">🧲</span> Gravitasi
+                    </div>
+                    <div class="card-specs">
+                        Gravitasi di permukaan Matahari sekitar <b>27,9 kali</b> lebih kuat dari gravitasi Bumi. Gaya tarik yang luar biasa inilah yang menahan ke-8 planet, komet, dan sabuk asteroid agar tidak terlempar ke luar angkasa.
+                    </div>
+                </div>
+
+                <div class="data-card c-green" onclick="revealCard(this)">
+                    <div class="card-header">
+                        <span class="card-icon">🌱</span> Manfaat Utama
+                    </div>
+                    <div class="card-specs">
+                        Sebagai sumber energi utama, Matahari menjaga suhu Bumi tetap hangat, menggerakkan siklus air (hujan), dan memberikan cahaya yang sangat dibutuhkan oleh tumbuhan untuk melakukan proses <b>fotosintesis</b>.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = "KAPTEN " + astronotName.toUpperCase();
+            
+            const bgm = document.getElementById('audioHum');
+            if(bgm) bgm.volume = 0.1;
+        };
+
+        // Fungsi Buka Tutup Kartu Data
+        function revealCard(el) {
+            document.getElementById('audioPop').currentTime = 0;
+            document.getElementById('audioPop').play().catch(e=>{});
+            
+            // Cek apakah kartu yang diklik sudah terbuka
+            const isRevealed = el.classList.contains('revealed');
+
+            // Tutup semua kartu terlebih dahulu
+            const parentGrid = el.parentElement;
+            parentGrid.querySelectorAll('.data-card').forEach(card => card.classList.remove('revealed'));
+            
+            // Jika sebelumnya tertutup, maka buka. (Jika sebelumnya terbuka, biarkan tertutup / toggle)
+            if(!isRevealed) {
+                el.classList.add('revealed');
+            }
+        }
+
+        function navigasi(url) {
+            const sound = document.getElementById('audioPop');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+    </script>
+</body>
+</html>

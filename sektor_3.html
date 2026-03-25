@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Sektor 3 - Sisa Kosmik</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- TEMA VIBRANT SPACE ADVENTURE --- */
+        :root {
+            --bg-space: #111827; /* Lebih gelap untuk Sabuk Asteroid */
+            --card-bg: #FFFFFF;
+            --text-dark: #0F172A;
+            --text-light: #F8FAFC;
+            --accent-orange: #FF6B00;
+            --accent-yellow: #FFD600;
+            --btn-green: #00E676;
+            --btn-blue: #00E5FF;
+            --shadow-hard: 6px 6px 0px #0F172A;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        /* --- DESKTOP 16:9 MODE (Kunci Scroll) --- */
+        body {
+            background: linear-gradient(135deg, #050505, var(--bg-space), #1E1B4B);
+            color: var(--text-dark);
+            font-family: 'Nunito', sans-serif;
+            height: 100dvh; min-height: 100dvh; 
+            width: 100vw; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .stars {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><circle cx="20" cy="20" r="1.5" fill="white" opacity="0.3"/><circle cx="150" cy="80" r="2" fill="gray" opacity="0.5"/><circle cx="80" cy="150" r="1" fill="white" opacity="0.2"/></svg>') repeat;
+            animation: moveStars 120s linear infinite; z-index: 1; pointer-events: none;
+        }
+        @keyframes moveStars { from { background-position: 0 0; } to { background-position: -1000px 1000px; } }
+
+        /* --- CONTAINER UTAMA --- */
+        .main-wrapper {
+            position: relative; z-index: 10;
+            width: 95vw; max-width: 1400px; height: 90dvh;
+            display: flex; flex-direction: row; gap: 20px;
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px);
+            border: 4px solid var(--accent-yellow); border-radius: 25px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.6); padding: 20px;
+        }
+
+        /* --- KIRI: PANEL KENDALI (VO Box) --- */
+        .left-panel { flex: 0.35; display: flex; flex-direction: column; height: 100%; gap: 15px; }
+
+        .sector-title {
+            font-family: 'Fredoka', sans-serif; font-size: 2.2rem;
+            color: var(--accent-yellow); text-transform: uppercase; line-height: 1.1;
+            text-shadow: 3px 3px 0px var(--accent-orange); flex-shrink: 0;
+        }
+        
+        .vo-box {
+            flex: 1; background: var(--card-bg); border: 4px solid var(--text-dark);
+            padding: 20px; border-radius: 15px; font-size: 1.3rem; font-weight: 700;
+            box-shadow: var(--shadow-hard); overflow-y: auto; display: flex; flex-direction: column; justify-content: center;
+            position: relative;
+        }
+        
+        .alert-icon {
+            position: absolute; top: -15px; right: -15px; font-size: 3rem;
+            animation: pulseAlert 1s infinite alternate; filter: drop-shadow(3px 3px 0px #0F172A);
+        }
+        @keyframes pulseAlert { from { transform: scale(1); } to { transform: scale(1.1); } }
+
+        .btn-main-menu {
+            margin-top: auto; background: var(--accent-orange); border: 4px solid var(--text-dark);
+            color: var(--text-dark); font-family: 'Fredoka', sans-serif; font-size: 1.2rem;
+            padding: 15px; border-radius: 15px; cursor: pointer; box-shadow: var(--shadow-hard);
+            text-transform: uppercase; transition: 0.2s; text-align: center;
+        }
+        .btn-main-menu:hover { transform: translateY(-3px); }
+        .btn-main-menu:active { transform: translate(3px,3px); box-shadow: none; }
+
+        /* --- KANAN: PANEL LAYAR UTAMA (Konten Dinamis) --- */
+        .right-panel {
+            flex: 0.65; position: relative;
+            background: #0B0F19; border: 4px solid var(--text-dark);
+            border-radius: 20px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+
+        .view-content { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; padding: 20px; }
+        .view-content.active { display: flex; flex-direction: column; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- VIEW 1: RADAR SISA KOSMIK (SABUK ASTEROID) --- */
+        #view-radar { align-items: center; justify-content: center; position: relative; }
+        
+        /* Batuan Melayang Background (Di-generate JS) */
+        .bg-rock { position: absolute; font-size: 1.5rem; opacity: 0.4; filter: grayscale(100%); animation: drift 20s linear infinite; pointer-events: none; }
+        @keyframes drift { from { transform: translateX(-50px) rotate(0deg); } to { transform: translateX(100vw) rotate(360deg); } }
+
+        /* Pesawat Tengah */
+        .spaceship {
+            position: absolute; z-index: 20; font-size: 4rem; filter: drop-shadow(0 0 15px var(--btn-blue));
+            animation: floatCenter 3s ease-in-out infinite; pointer-events: none;
+        }
+        @keyframes floatCenter { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* Objek Utama Berpendar */
+        .cosmic-obj {
+            position: absolute; z-index: 25; cursor: pointer; display: flex; flex-direction: column; align-items: center;
+            transition: 0.3s; animation: floatObj 4s ease-in-out infinite;
+        }
+        .cosmic-obj:hover { transform: scale(1.2) !important; z-index: 30; }
+        .cosmic-obj.asteroid { top: 15%; left: 20%; animation-delay: 0s; }
+        .cosmic-obj.comet { top: 25%; right: 15%; animation-delay: 1s; }
+        .cosmic-obj.meteor { bottom: 15%; left: 50%; transform: translateX(-50%); animation-delay: 2s; }
+        
+        .obj-icon {
+            font-size: 4rem; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border-radius: 50%; border: 3px solid;
+            box-shadow: 0 0 20px;
+        }
+        .cosmic-obj.asteroid .obj-icon { border-color: #A8A29E; box-shadow: 0 0 30px #A8A29E; }
+        .cosmic-obj.comet .obj-icon { border-color: #00E5FF; box-shadow: 0 0 40px #00E5FF; background: rgba(0, 229, 255, 0.2);}
+        .cosmic-obj.meteor .obj-icon { border-color: #FF4500; box-shadow: 0 0 30px #FF4500; }
+
+        .obj-label {
+            margin-top: 10px; font-family: 'Fredoka'; font-size: 1.2rem; color: var(--text-dark);
+            background: var(--accent-yellow); padding: 5px 15px; border-radius: 10px; border: 2px solid var(--text-dark);
+            box-shadow: 3px 3px 0 #000;
+        }
+
+        @keyframes floatObj { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* --- VIEW MATERI (Detail Objek) --- */
+        .detail-view { overflow-y: auto; justify-content: flex-start; align-items: center; gap: 20px; }
+        .detail-view::-webkit-scrollbar { width: 8px; } .detail-view::-webkit-scrollbar-thumb { background: var(--accent-yellow); border-radius: 4px; }
+        
+        .btn-back-radar {
+            align-self: flex-start; background: var(--btn-blue); border: 3px solid var(--text-dark); font-weight: bold;
+            padding: 10px 20px; border-radius: 10px; cursor: pointer; box-shadow: 4px 4px 0 #000; transition: 0.2s; font-family: 'Fredoka';
+        }
+        .btn-back-radar:active { transform: translate(2px,2px); box-shadow: none; }
+
+        .materi-card {
+            background: var(--card-bg); border: 4px solid var(--text-dark); border-radius: 20px;
+            padding: 25px; width: 90%; max-width: 600px; box-shadow: var(--shadow-hard);
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .materi-header { display: flex; align-items: center; gap: 20px; border-bottom: 3px dashed #CCC; padding-bottom: 15px; }
+        .materi-icon { font-size: 4rem; filter: drop-shadow(3px 3px 0px rgba(0,0,0,0.3)); }
+        .materi-title { font-family: 'Fredoka'; font-size: 2.2rem; color: var(--text-dark); text-transform: uppercase; }
+        
+        .materi-body { font-size: 1.2rem; line-height: 1.6; font-weight: 700; color: #334155; }
+        .materi-body ul { margin-left: 20px; margin-top: 10px; }
+        .materi-body li { margin-bottom: 8px; }
+        .highlight-text { color: #FF4500; font-weight: 900; }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 950px) {
+            body { height: auto; overflow-y: auto; display: block; padding: 15px 0; }
+            .main-wrapper { flex-direction: column; width: 92vw; height: auto; margin: 0 auto; overflow: visible; padding: 15px; gap: 15px; }
+            .left-panel, .right-panel { flex: none; width: 100%; height: auto; }
+            .right-panel { min-height: 500px; }
+            .cosmic-obj { transform: scale(0.8); }
+            .cosmic-obj.asteroid { top: 5%; left: 5%; }
+            .cosmic-obj.comet { top: 5%; right: 5%; }
+            .cosmic-obj.meteor { bottom: 5%; left: 50%; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioStatic" src="https://www.soundjay.com/communication/sounds/radio-static-1.mp3" loop></audio>
+    <audio id="audioClick" src="https://www.soundjay.com/buttons/sounds/button-30.mp3"></audio>
+    <audio id="audioWhoosh" src="https://www.soundjay.com/nature/sounds/wind-howl-01.mp3"></audio>
+
+    <div class="stars"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="left-panel">
+            <div class="sector-title">SEKTOR 03:<br>SISA KOSMIK</div>
+
+            <div class="vo-box">
+                <div class="alert-icon">⚠️</div>
+                <span id="vo-text" style="color: #0F172A;">
+                    "Hati-hati, Kapten <span style="color:#FF6B00" id="namaKapten">[Kapten]</span>! Kita memasuki wilayah Sabuk Asteroid, sisa-sisa pembentukan Tata Surya. Klik salah satu objek berpendar di radar untuk membedah datanya!"
+                </span>
+            </div>
+
+            <button class="btn-main-menu" onclick="window.location.href='menu_3_sektor.html'">
+                ◀ KEMBALI KE MENU
+            </button>
+        </div>
+
+        <div class="right-panel">
+            
+            <div id="view-radar" class="view-content active">
+                <div class="spaceship">🚀</div>
+                
+                <div class="cosmic-obj asteroid" onclick="bukaDetail('asteroid')">
+                    <div class="obj-icon">🪨</div>
+                    <div class="obj-label">ASTEROID</div>
+                </div>
+
+                <div class="cosmic-obj comet" onclick="bukaDetail('comet')">
+                    <div class="obj-icon">☄️</div>
+                    <div class="obj-label">KOMET</div>
+                </div>
+
+                <div class="cosmic-obj meteor" onclick="bukaDetail('meteor')">
+                    <div class="obj-icon">🌠</div>
+                    <div class="obj-label">METEOROID</div>
+                </div>
+            </div>
+
+            <div id="view-asteroid" class="view-content detail-view">
+                <button class="btn-back-radar" onclick="kembaliKeRadar()">📡 KEMBALI KE RADAR</button>
+                <div class="materi-card">
+                    <div class="materi-header">
+                        <div class="materi-icon">🪨</div>
+                        <div class="materi-title" style="color: #6B7280;">Asteroid</div>
+                    </div>
+                    <div class="materi-body">
+                        Bongkahan batu dan logam sisa pembentukan Tata Surya yang mengorbit Matahari.
+                        <ul>
+                            <li><b>Lokasi Utama:</b> Mayoritas berada di <span class="highlight-text">Sabuk Asteroid</span> (antara orbit Mars dan Jupiter).</li>
+                            <li><b>Bentuk:</b> Tidak beraturan, tidak bulat seperti planet karena gravitasinya lemah.</li>
+                            <li><b>Planet Kerdil:</b> Asteroid terbesar yang pernah ditemukan bernama <i>Ceres</i>, yang kini diklasifikasikan sebagai planet kerdil.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-comet" class="view-content detail-view">
+                <button class="btn-back-radar" onclick="kembaliKeRadar()">📡 KEMBALI KE RADAR</button>
+                <div class="materi-card">
+                    <div class="materi-header">
+                        <div class="materi-icon">☄️</div>
+                        <div class="materi-title" style="color: #00E5FF;">Komet</div>
+                    </div>
+                    <div class="materi-body">
+                        Sering dijuluki <span class="highlight-text">"Bintang Berekor"</span>, komet adalah bola salju kosmik yang terbuat dari es, gas, dan debu.
+                        <ul>
+                            <li><b>Ekor Komet:</b> Saat mendekati Matahari, esnya menguap membentuk ekor bercahaya (Koma).</li>
+                            <li><b>Arah Ekor:</b> Ekor komet <b>selalu menjauhi Matahari</b> akibat dorongan angin surya!</li>
+                            <li><b>Asal usul:</b> Berasal dari area terluar tata surya (Sabuk Kuiper & Awan Oort). Komet Halley adalah yang paling terkenal (muncul 76 tahun sekali).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-meteor" class="view-content detail-view">
+                <button class="btn-back-radar" onclick="kembaliKeRadar()">📡 KEMBALI KE RADAR</button>
+                <div class="materi-card">
+                    <div class="materi-header">
+                        <div class="materi-icon">🌠</div>
+                        <div class="materi-title" style="color: #FF4500;">Meteoroid</div>
+                    </div>
+                    <div class="materi-body">
+                        Pecahan batu/logam kecil di luar angkasa. Hati-hati dengan 3 istilah yang mirip ini!
+                        <ul>
+                            <li><span class="highlight-text">Meteoroid:</span> Batu kecil yang melayang bebas di luar angkasa.</li>
+                            <li><span class="highlight-text">Meteor:</span> Meteoroid yang masuk ke atmosfer Bumi dan terbakar (sering kita sebut <b>"Bintang Jatuh"</b>).</li>
+                            <li><span class="highlight-text">Meteorit:</span> Sisa batu meteor yang selamat dari pembakaran dan berhasil menabrak permukaan Bumi!</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Inisialisasi Data & Audio
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = astronotName;
+            
+            putarAudio('audioStatic');
+            generateBackgroundRocks();
+        };
+
+        // Memutar efek suara statis radio dengan volume pelan
+        function putarAudio(id) {
+            let aud = document.getElementById(id);
+            aud.volume = id === 'audioStatic' ? 0.3 : 0.6;
+            aud.currentTime = 0; aud.play().catch(e=>{});
+        }
+
+        // --- SISTEM NAVIGASI (RADAR <-> DETAIL) ---
+        function bukaDetail(objekId) {
+            document.getElementById('audioClick').play().catch(e=>{});
+            document.getElementById('audioStatic').pause(); // Matikan suara statis
+            putarAudio('audioWhoosh'); // Efek wusss pesawat mendekat
+            
+            // Sembunyikan radar, munculkan panel detail terkait
+            document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+            document.getElementById(`view-${objekId}`).classList.add('active');
+
+            // Ubah teks VO
+            let teksBaru = "";
+            if(objekId === 'asteroid') teksBaru = "Memindai <b>Asteroid</b>. Menemukan formasi batuan padat. Mengirimkan data ke layar utama!";
+            if(objekId === 'comet') teksBaru = "Suhu turun drastis! Memindai <b>Komet</b>. Bola salju raksasa ini memiliki ekor yang menakjubkan.";
+            if(objekId === 'meteor') teksBaru = "Peringatan! Mendeteksi <b>Meteoroid</b>. Benda ini yang sering menyebabkan fenomena Bintang Jatuh di Bumi.";
+            document.getElementById('vo-text').innerHTML = teksBaru;
+        }
+
+        function kembaliKeRadar() {
+            document.getElementById('audioClick').play().catch(e=>{});
+            putarAudio('audioStatic'); // Nyalakan lagi suara radar
+            
+            // Tampilkan kembali radar
+            document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+            document.getElementById('view-radar').classList.add('active');
+
+            // Kembalikan teks VO awal
+            let nama = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('vo-text').innerHTML = `"Radar aktif kembali. Silakan pilih objek sisa kosmik lainnya, Kapten <span style="color:#FF6B00">${nama}</span>!"`;
+        }
+
+        // --- TEKNIS: GENERATE BATU MELAYANG DI BACKGROUND RADAR ---
+        function generateBackgroundRocks() {
+            const radarView = document.getElementById('view-radar');
+            const rockEmojis = ['🪨', '🌑', '🪨', '🎇', '☄️']; // Variasi batu
+            
+            // Buat 15 batu melayang
+            for(let i=0; i<15; i++) {
+                let rock = document.createElement('div');
+                rock.className = 'bg-rock';
+                rock.innerText = rockEmojis[Math.floor(Math.random() * rockEmojis.length)];
+                
+                // Posisi Acak Vertikal
+                rock.style.top = Math.random() * 90 + '%';
+                // Kecepatan dan durasi melayang bervariasi
+                rock.style.animationDuration = (15 + Math.random() * 20) + 's';
+                // Delay acak agar tidak keluar bersamaan
+                rock.style.animationDelay = (Math.random() * -20) + 's';
+                // Ukuran acak
+                rock.style.fontSize = (0.8 + Math.random() * 1.5) + 'rem';
+                
+                radarView.appendChild(rock);
+            }
+        }
+    </script>
+</body>
+</html>

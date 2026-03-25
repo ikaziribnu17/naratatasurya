@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Simulasi 4 - Mesin Waktu</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA STANDAR --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --pink-glow: 0 0 15px rgba(255, 51, 102, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        /* KUNCI LAYAR MUTLAK: 100dvh tanpa scroll luar */
+        body {
+            background-color: var(--space-blue); color: #ffffff;
+            font-family: var(--font-body);
+            height: 100dvh; width: 100vw; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.4; animation: panSpace 60s infinite alternate linear; pointer-events: none;
+        }
+        @keyframes panSpace { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.05) translate(-2%, 2%); } }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1); pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA --- */
+        .main-wrapper {
+            position: relative; z-index: 20; width: 96%; max-width: 1600px; height: 96dvh; 
+            display: flex; flex-direction: column; gap: 1.5vh; padding: 1.5vh 0; margin: auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- SUB-MENU ATAS --- */
+        .top-submenu {
+            display: flex; justify-content: center; gap: 1vw; flex-shrink: 0;
+            background: rgba(45, 27, 78, 0.5); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 1vh; width: fit-content; margin: 0 auto;
+        }
+        .btn-sub {
+            background: transparent; border: 2px solid rgba(255,255,255,0.2); 
+            color: #fff; font-family: var(--font-heading); font-size: clamp(0.8rem, 1vw, 1rem); 
+            padding: 0.8vh 1.5vw; border-radius: 8px; cursor: pointer; transition: 0.3s; text-transform: uppercase;
+        }
+        .btn-sub:hover { border-color: var(--neon-cyan); background: rgba(0, 242, 255, 0.1); }
+        .btn-sub.active { background: var(--neon-cyan); color: var(--space-blue); border-color: var(--neon-cyan); box-shadow: var(--cyan-glow); }
+
+        /* --- KONTEN SPLIT LAYOUT --- */
+        .content-body { flex: 1; display: flex; flex-direction: row; gap: 2vw; min-height: 0; overflow: hidden;}
+        
+        /* --- KIRI: PANEL KONTROL & INFO --- */
+        .left-panel { flex: 0.35; display: flex; flex-direction: column; gap: 1.5vh; height: 100%;}
+        
+        .vo-box {
+            background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 242, 255, 0.3); border-left: 6px solid var(--neon-cyan);
+            padding: 1.5vh 1.5vw; border-radius: 12px; font-size: clamp(0.85rem, 1vw, 1.1rem); 
+            color: #E2E8F0; line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); flex-shrink: 0;
+        }
+        .vo-box h2 { font-family: var(--font-heading); color: var(--neon-cyan); font-size: clamp(1.2rem, 1.5vw, 1.6rem); margin-bottom: 0.5vh; text-shadow: var(--cyan-glow);}
+        .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
+
+        .detail-box {
+            flex: 1; background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
+            padding: 2vh 2vw; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 1.5vh; overflow-y: auto; /* Internal Scroll */
+        }
+        .detail-box::-webkit-scrollbar { width: 8px; }
+        .detail-box::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+
+        .layer-name { font-family: var(--font-heading); font-size: clamp(1.2rem, 1.6vw, 1.8rem); color: var(--neon-cyan); border-bottom: 2px dashed rgba(255, 255, 255, 0.3); padding-bottom: 1vh; flex-shrink: 0;}
+
+        /* Kontrol Waktu */
+        .time-machine { background: rgba(0,0,0,0.4); border: 1px solid var(--neon-cyan); padding: 2vh 1.5vw; border-radius: 15px; margin-top: auto;}
+        .time-display { font-family: var(--font-heading); font-size: clamp(1.5rem, 2.5vw, 3rem); color: var(--neon-orange); text-align: center; text-shadow: var(--orange-glow); margin-bottom: 1vh;}
+        .slider-control { width: 100%; cursor: pointer; accent-color: var(--neon-cyan); margin-bottom: 2vh;}
+        
+        .btn-play {
+            background: rgba(0, 230, 118, 0.1); border: 2px solid var(--neon-green);
+            color: var(--neon-green); font-family: var(--font-heading); font-size: clamp(1rem, 1.3vw, 1.4rem);
+            padding: 1.5vh 0; border-radius: 10px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 0 10px rgba(0,230,118,0.4);
+        }
+        .btn-play:hover { background: var(--neon-green); color: var(--space-blue); transform: translateY(-3px); }
+        .btn-play.playing { background: rgba(255, 51, 102, 0.1); border-color: var(--neon-pink); color: var(--neon-pink); box-shadow: 0 0 10px rgba(255,51,102,0.4);}
+        .btn-play.playing:hover { background: var(--neon-pink); color: #fff;}
+
+        /* --- KANAN: ARENA VISUAL (65%) --- */
+        .right-panel {
+            flex: 0.65; height: 100%; position: relative;
+            background: rgba(11, 13, 23, 0.8); border: 2px solid rgba(0, 242, 255, 0.2);
+            border-radius: 25px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Sinar Matahari dari Kanan */
+        .sun-rays {
+            position: absolute; right: 0; top: 0; width: 40%; height: 100%;
+            background: linear-gradient(to left, rgba(255, 215, 0, 0.15), transparent); pointer-events: none; z-index: 1;
+        }
+        
+        /* PERBAIKAN: Label Arah Cahaya Matahari Horizontal di Sudut Kanan */
+        .sun-label { 
+            position: absolute; right: 2vw; top: 3vh; 
+            font-family: var(--font-heading); color: var(--neon-orange); 
+            font-size: clamp(0.9rem, 1.2vw, 1.1rem); text-shadow: var(--orange-glow);
+            background: rgba(255, 153, 0, 0.1); border: 1px dashed var(--neon-orange);
+            padding: 1vh 1.5vw; border-radius: 20px; z-index: 10;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        /* HUD Kiri Atas: Data Fase */
+        .hud-phase {
+            position: absolute; top: 2vh; left: 2vw; z-index: 20;
+            background: rgba(45, 27, 78, 0.8); border-left: 5px solid var(--neon-cyan);
+            padding: 1.5vh 1.5vw; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 15px;
+        }
+        .phase-icon { font-size: clamp(2rem, 3vw, 3.5rem); filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));}
+        .phase-text { display: flex; flex-direction: column;}
+        .phase-label { font-size: 0.85rem; color: #cbd5e1;}
+        .phase-name { font-family: var(--font-heading); font-size: clamp(1.2rem, 1.5vw, 1.8rem); color: var(--neon-cyan); text-shadow: var(--cyan-glow); text-transform: uppercase;}
+
+        /* Obyek Bumi dan Orbit Bulan */
+        .earth-system { position: relative; width: clamp(250px, 40vh, 500px); height: clamp(250px, 40vh, 500px); z-index: 5;}
+        
+        .earth-orbit {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 50%; border: 2px dashed rgba(255,255,255,0.2);
+        }
+
+        .earth-globe {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: clamp(80px, 12vh, 150px); height: clamp(80px, 12vh, 150px); border-radius: 50%;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif') center/cover;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 0 15px rgba(51, 255, 255, 0.3);
+        }
+        
+        /* Bayangan Malam di Bumi (Tetap di kiri) */
+        .night-shadow {
+            position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+            background: rgba(0,0,0,0.7); border-radius: 150px 0 0 150px; pointer-events: none;
+        }
+
+        /* Obyek Bulan */
+        .moon-wrapper { position: absolute; top: 50%; left: -15px; transform: translateY(-50%); width: 30px; height: 30px; z-index: 10; }
+        
+        .moon-body {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle at 70% 50%, #E2E8F0, #64748B); /* Terang di kanan */
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+        }
+        .moon-night {
+            position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+            background: rgba(0,0,0,0.85); border-radius: 30px 0 0 30px;
+        }
+
+        /* --- NAVIGASI BAWAH --- */
+        .nav-container-fixed { display: flex; gap: 2vw; flex-shrink: 0; padding-top: 0.5vh;}
+        .btn-nav-f {
+            flex: 1; background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-cyan); 
+            color: var(--neon-cyan); font-family: var(--font-heading); font-size: clamp(0.9rem, 1.2vw, 1.2rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase;
+        }
+        .btn-nav-f:hover { background: var(--neon-cyan); color: var(--space-blue); transform: translateY(-3px);}
+        .btn-nav-f.next { border-color: var(--neon-orange); color: var(--neon-orange); background: rgba(255, 153, 0, 0.1);}
+        .btn-nav-f.next:hover { background: var(--neon-orange); color: var(--space-blue); box-shadow: var(--orange-glow);}
+
+        /* --- PENYESUAIAN MOBILE --- */
+        @media (max-width: 950px) {
+            body { overflow-y: auto; align-items: flex-start; padding: 10px 0;}
+            .main-wrapper { height: auto; min-height: 100dvh; overflow: visible;}
+            .content-body { flex-direction: column; overflow: visible;}
+            .left-panel { flex: none; width: 100%; height: auto; }
+            .vo-box { display: none; }
+            .right-panel { flex: none; width: 100%; height: 50vh; min-height: 400px; margin-top: 2vh;}
+            .top-submenu { flex-wrap: wrap; width: 100%; }
+            .sun-label { font-size: 0.8rem; padding: 5px 10px; top: auto; bottom: 2vh; right: 2vw;} /* Pindah ke bawah di mode HP agar tidak nabrak */
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="top-submenu">
+            <button class="btn-sub" onclick="navigasi('simulasi_1.html')">Simulasi 1</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_2.html')">Simulasi 2</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_3.html')">Simulasi 3</button>
+            <button class="btn-sub active">Simulasi 4</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_5.html')">Simulasi 5</button>
+        </div>
+
+        <div class="content-body">
+            
+            <div class="left-panel">
+                <div class="vo-box">
+                    <h2>⏱️ Mesin Waktu</h2>
+                    Kapten <span id="namaKapten" class="highlight">[Kapten]</span>! Geser pengatur waktu untuk mempercepat hari.<br><br>
+                    Perhatikan bagaimana pergerakan orbit Bulan mengubah pencahayaan Matahari di permukaannya, menciptakan <b>Fase Bulan</b> yang kita lihat dari Bumi.
+                </div>
+                
+                <div class="detail-box">
+                    <div class="layer-name">Panel Temporal</div>
+                    <div style="color: #cbd5e1; font-size: clamp(0.85rem, 1vw, 1rem); line-height: 1.5;">
+                        Cahaya matahari selalu menyinari setengah bagian Bumi dan Bulan. Saat bulan berputar mengelilingi bumi, sudut pandang kita berubah. Geser pengatur untuk melihat siklus 29,5 hari!
+                    </div>
+
+                    <div class="time-machine">
+                        <div class="time-display" id="timeDisplay">Hari ke-0.0</div>
+                        <input type="range" id="timeSlider" class="slider-control" min="0" max="29.5" step="0.1" value="0" oninput="updateTimeMachine(false)">
+                        <button class="btn-play" id="btnPlay" onclick="toggleAutoPlay()">▶ JALANKAN WAKTU</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                
+                <div class="sun-rays"></div>
+                
+                <div class="sun-label">⬅ SINAR MATAHARI</div>
+
+                <div class="hud-phase">
+                    <div class="phase-icon" id="phaseIcon">🌑</div>
+                    <div class="phase-text">
+                        <div class="phase-label">FASE TERAMATI:</div>
+                        <div class="phase-name" id="phaseName">BULAN BARU</div>
+                    </div>
+                </div>
+
+                <div class="earth-system">
+                    
+                    <div class="earth-globe">
+                        <div class="night-shadow"></div>
+                    </div>
+
+                    <div class="earth-orbit" id="moonOrbit">
+                        <div class="moon-wrapper">
+                            <div class="moon-body" id="moonBody">
+                                <div class="moon-night"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <div class="nav-container-fixed">
+            <button class="btn-nav-f" onclick="navigasi('simulasi_3.html')">⬅ KEMBALI SIMULASI 3</button>
+            <button class="btn-nav-f next" onclick="navigasi('simulasi_5.html')">LANJUT SIMULASI 5 ➡</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = astronotName.toUpperCase();
+            updateTimeMachine(true);
+        };
+
+        function navigasi(url) {
+            document.getElementById('audioPop').play().catch(()=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        // --- ENGINE MESIN WAKTU ---
+        const timeSlider = document.getElementById('timeSlider');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const moonOrbit = document.getElementById('moonOrbit');
+        const moonBody = document.getElementById('moonBody');
+        const phaseName = document.getElementById('phaseName');
+        const phaseIcon = document.getElementById('phaseIcon');
+        const btnPlay = document.getElementById('btnPlay');
+
+        let autoPlayInterval;
+        let isPlaying = false;
+
+        function updateTimeMachine(isAutoPlaying) {
+            let days = parseFloat(timeSlider.value);
+            timeDisplay.innerText = "Hari ke-" + days.toFixed(1);
+
+            // Rotasi orbit bulan (29.5 hari = 360 derajat)
+            let angle = (days / 29.5) * 360;
+            moonOrbit.style.transform = `rotate(${angle}deg)`;
+
+            // Counter rotasi agar sisi gelap selalu di kiri
+            moonBody.style.transform = `rotate(${-angle}deg)`;
+
+            // Menentukan Fase Bulan (berdasarkan hari)
+            let phase = ""; let icon = "";
+            if (days < 1.5 || days > 28) { phase = "Bulan Baru"; icon = "🌑"; }
+            else if (days >= 1.5 && days < 6.5) { phase = "Sabit Awal"; icon = "🌒"; }
+            else if (days >= 6.5 && days < 8.5) { phase = "Perbani Awal"; icon = "🌓"; }
+            else if (days >= 8.5 && days < 13.5) { phase = "Cembung Awal"; icon = "🌔"; }
+            else if (days >= 13.5 && days < 16) { phase = "Bulan Purnama"; icon = "🌕"; }
+            else if (days >= 16 && days < 21) { phase = "Cembung Akhir"; icon = "🌖"; }
+            else if (days >= 21 && days < 23) { phase = "Perbani Akhir"; icon = "🌗"; }
+            else if (days >= 23 && days <= 28) { phase = "Sabit Akhir"; icon = "🌘"; }
+
+            phaseName.innerText = phase;
+            phaseIcon.innerText = icon;
+
+            // Efek suara tik-tok
+            if(!isAutoPlaying && days % 1 === 0) {
+                document.getElementById('audioPop').volume = 0.1;
+                document.getElementById('audioPop').play().catch(()=>{});
+            }
+        }
+
+        function toggleAutoPlay() {
+            document.getElementById('audioPop').play().catch(()=>{});
+            isPlaying = !isPlaying;
+
+            if (isPlaying) {
+                btnPlay.innerText = "⏸ HENTIKAN WAKTU";
+                btnPlay.classList.add('playing');
+                
+                autoPlayInterval = setInterval(() => {
+                    let currentVal = parseFloat(timeSlider.value);
+                    currentVal += 0.1; 
+                    if(currentVal > 29.5) currentVal = 0; 
+                    
+                    timeSlider.value = currentVal;
+                    updateTimeMachine(true);
+                }, 50); 
+            } else {
+                btnPlay.innerText = "▶ JALANKAN WAKTU";
+                btnPlay.classList.remove('playing');
+                clearInterval(autoPlayInterval);
+            }
+        }
+    </script>
+</body>
+</html>

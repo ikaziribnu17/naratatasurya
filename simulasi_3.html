@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Simulasi 3 - Generator Kawah</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA STANDAR --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --pink-glow: 0 0 15px rgba(255, 51, 102, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        /* KUNCI LAYAR MUTLAK: 100dvh tanpa scroll luar */
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            height: 100dvh;
+            width: 100vw;
+            overflow: hidden; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.4; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.05) translate(-2%, 2%); } }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1600px; 
+            height: 96dvh; 
+            display: flex; flex-direction: column; gap: 1.5vh;
+            padding: 1.5vh 0; margin: auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- SUB-MENU ATAS --- */
+        .top-submenu {
+            display: flex; justify-content: center; gap: 1vw; flex-shrink: 0;
+            background: rgba(45, 27, 78, 0.5); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1); border-radius: 12px;
+            padding: 1vh; width: fit-content; margin: 0 auto;
+        }
+        .btn-sub {
+            background: transparent; border: 2px solid rgba(255,255,255,0.2); 
+            color: #fff; font-family: var(--font-heading);
+            font-size: clamp(0.8rem, 1vw, 1rem); 
+            padding: 0.8vh 1.5vw; border-radius: 8px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .btn-sub:hover { border-color: var(--neon-cyan); background: rgba(0, 242, 255, 0.1); }
+        .btn-sub.active { background: var(--neon-cyan); color: var(--space-blue); border-color: var(--neon-cyan); box-shadow: var(--cyan-glow); }
+
+        /* --- KONTEN SPLIT LAYOUT --- */
+        .content-body { flex: 1; display: flex; flex-direction: row; gap: 2vw; min-height: 0; overflow: hidden;}
+        
+        /* --- KIRI: PANEL KONTROL & INFO (35%) --- */
+        .left-panel { flex: 0.35; display: flex; flex-direction: column; gap: 1.5vh; height: 100%;}
+        
+        .vo-box {
+            background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 242, 255, 0.3); border-left: 6px solid var(--neon-orange);
+            padding: 1.5vh 1.5vw; border-radius: 12px; font-size: clamp(0.85rem, 1vw, 1.1rem); 
+            color: #E2E8F0; line-height: 1.5; box-shadow: 0 5px 15px rgba(0,0,0,0.5); flex-shrink: 0;
+        }
+        .vo-box h2 { font-family: var(--font-heading); color: var(--neon-orange); font-size: clamp(1.2rem, 1.5vw, 1.6rem); margin-bottom: 0.5vh; text-shadow: var(--orange-glow);}
+        .highlight { color: var(--neon-cyan); font-weight: 600; text-shadow: var(--cyan-glow);}
+
+        /* PERBAIKAN: SCROLL INTERNAL AGAR TOMBOL LUNCURKAN TIDAK HILANG */
+        .detail-box {
+            flex: 1; background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px; 
+            padding: 2vh 2vw; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; gap: 1.5vh;
+            overflow-y: auto; /* Kunci Solusi: Kotak ini sekarang bisa di-scroll jika layar pendek */
+        }
+        /* Custom Scrollbar untuk Kotak Kiri */
+        .detail-box::-webkit-scrollbar { width: 8px; }
+        .detail-box::-webkit-scrollbar-track { background: rgba(0, 242, 255, 0.05); border-radius: 10px; }
+        .detail-box::-webkit-scrollbar-thumb { background: var(--neon-orange); border-radius: 10px; }
+
+        .layer-name { font-family: var(--font-heading); font-size: clamp(1.2rem, 1.6vw, 1.8rem); color: var(--neon-orange); border-bottom: 2px dashed rgba(255, 255, 255, 0.3); padding-bottom: 1vh; flex-shrink: 0;}
+
+        /* Kontrol Simulasi */
+        .control-group { display: flex; flex-direction: column; gap: 1.5vh; flex-shrink: 0;}
+        .control-item { display: flex; flex-direction: column; gap: 5px; }
+        .label-control { font-family: var(--font-heading); font-size: clamp(0.9rem, 1.1vw, 1.1rem); color: var(--neon-cyan); display: flex; justify-content: space-between;}
+        .slider-control { width: 100%; cursor: pointer; accent-color: var(--neon-orange); }
+
+        .btn-launch {
+            background: rgba(255, 51, 102, 0.1); border: 2px solid var(--neon-pink);
+            color: var(--neon-pink); font-family: var(--font-heading); font-size: clamp(1.1rem, 1.4vw, 1.5rem);
+            padding: 2vh 0; border-radius: 10px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; width: 100%; 
+            margin-top: 1vh; flex-shrink: 0; box-shadow: var(--pink-glow);
+        }
+        .btn-launch:hover { background: var(--neon-pink); color: #fff; transform: translateY(-3px); }
+
+        /* --- KANAN: ARENA VISUAL JATUH (65%) --- */
+        .right-panel {
+            flex: 0.65; height: 100%; position: relative;
+            background: #000; border: 2px solid rgba(0, 242, 255, 0.2);
+            border-radius: 25px; box-shadow: inset 0 0 50px rgba(0,0,0,0.9);
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        /* 3 Zona Lingkungan (DI-UPGRADE LEBIH JELAS) */
+        .zone-space { 
+            flex: 0.45; position: relative; display: flex; justify-content: center; align-items: flex-start; padding-top: 3%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=1080&auto=format&fit=crop') center/cover; 
+        }
+        
+        .zone-atmos { 
+            flex: 0.40; position: relative; display: flex; justify-content: center; align-items: flex-start; padding-top: 2%;
+            background: linear-gradient(to bottom, rgba(11, 13, 23, 0.9), rgba(0, 242, 255, 0.4), #60A5FA); 
+            border-top: 2px dashed rgba(0,242,255,0.8);
+        }
+        
+        .zone-ground { 
+            flex: 0.15; position: relative; display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(to bottom, #4CAF50, #1B5E20); 
+            border-top: 6px solid #5D4037; /* Garis tanah cokelat */
+        }
+
+        /* Teks Label Keterangan Zona (HUD Style) */
+        .zone-label {
+            font-family: var(--font-heading); font-size: clamp(1.5rem, 2.5vw, 3rem);
+            letter-spacing: 8px; text-transform: uppercase; opacity: 0.3;
+            pointer-events: none; text-align: center;
+        }
+
+        /* Batu Meteor */
+        .rock-obj {
+            position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 30px; height: 30px; border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+            background: radial-gradient(circle at 30% 30%, #9ca3af, #4b5563);
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.8);
+            z-index: 10; transition: top linear; 
+        }
+        /* Efek Api Terbakar di Atmosfer */
+        .rock-obj.burning::after {
+            content: ''; position: absolute; top: -150%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,153,0,0.8) 0%, rgba(255,51,102,0.6) 40%, transparent 70%);
+            border-radius: 50%; z-index: -1; animation: flicker 0.1s infinite alternate; filter: blur(5px);
+        }
+        @keyframes flicker { 0% { opacity: 0.8; transform: scale(1) translateY(-10px); } 100% { opacity: 1; transform: scale(1.2) translateY(-20px); } }
+
+        /* Kawah & Efek Ledakan */
+        .crater-obj {
+            position: absolute; bottom: 15%; left: 50%; transform: translate(-50%, 50%) scale(0);
+            width: 10px; height: 5px; background: rgba(0,0,0,0.6); border-radius: 50%;
+            border: 2px solid rgba(0,0,0,0.8); z-index: 6; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9);
+        }
+        .crater-obj.impact { transform: translate(-50%, 50%) scale(1); }
+        
+        .explosion-obj {
+            position: absolute; bottom: 15%; left: 50%; transform: translate(-50%, 50%) scale(0);
+            width: 50px; height: 50px; background: radial-gradient(circle, #FFF, var(--neon-orange), transparent);
+            border-radius: 50%; z-index: 11; opacity: 0; pointer-events: none;
+        }
+        .explosion-obj.boom { animation: boomAnim 0.8s ease-out forwards; }
+        @keyframes boomAnim { 0% { transform: translate(-50%, 50%) scale(0); opacity: 1; } 100% { transform: translate(-50%, 50%) scale(10); opacity: 0; } }
+
+        /* Getaran Layar */
+        .shake-screen { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% {transform: translateX(0) translateY(0);} 20% {transform: translateX(-10px) translateY(10px);} 40% {transform: translateX(10px) translateY(-10px);} 60% {transform: translateX(-10px) translateY(5px);} 80% {transform: translateX(10px) translateY(-5px);} }
+
+        /* HUD Status Name */
+        .hud-status {
+            position: absolute; top: 2vh; left: 2vw; z-index: 20;
+            background: rgba(11, 13, 23, 0.8); border-left: 5px solid var(--neon-cyan);
+            padding: 1vh 1.5vw; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .hud-label { font-size: 0.85rem; color: #cbd5e1; margin-bottom: 3px; }
+        .hud-name { font-family: var(--font-heading); font-size: clamp(1.2rem, 1.8vw, 2.2rem); color: var(--neon-cyan); text-shadow: var(--cyan-glow); text-transform: uppercase; transition: 0.3s;}
+        
+        .hud-result {
+            position: absolute; bottom: 20%; right: 2vw; z-index: 20;
+            background: rgba(45, 27, 78, 0.9); border: 2px solid var(--neon-orange);
+            padding: 1.5vh 1.5vw; border-radius: 15px; box-shadow: var(--orange-glow);
+            text-align: center; opacity: 0; transform: translateY(20px); transition: 0.5s;
+        }
+        .hud-result.show { opacity: 1; transform: translateY(0); }
+        .res-title { font-family: var(--font-heading); color: var(--neon-orange); font-size: 1.1rem; }
+        .res-value { font-family: var(--font-heading); color: #fff; font-size: clamp(1.5rem, 2vw, 2.5rem); margin: 5px 0;}
+
+        /* --- NAVIGASI BAWAH --- */
+        .nav-container-fixed { display: flex; gap: 2vw; flex-shrink: 0; padding-top: 0.5vh;}
+        .btn-nav-f {
+            flex: 1; background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-cyan); 
+            color: var(--neon-cyan); font-family: var(--font-heading); font-size: clamp(0.9rem, 1.2vw, 1.2rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px; text-transform: uppercase;
+        }
+        .btn-nav-f:hover { background: var(--neon-cyan); color: var(--space-blue); transform: translateY(-3px);}
+        .btn-nav-f.next { border-color: var(--neon-orange); color: var(--neon-orange); background: rgba(255, 153, 0, 0.1);}
+        .btn-nav-f.next:hover { background: var(--neon-orange); color: var(--space-blue); box-shadow: var(--orange-glow);}
+
+        /* --- PENYESUAIAN MOBILE --- */
+        @media (max-width: 950px) {
+            body { overflow-y: auto; align-items: flex-start; padding: 10px 0;}
+            .main-wrapper { height: auto; min-height: 100dvh; overflow: visible;}
+            .content-body { flex-direction: column; overflow: visible;}
+            .left-panel { flex: none; width: 100%; height: auto; }
+            .vo-box { display: none; } /* Sembunyikan intro di HP agar lebih hemat ruang */
+            .detail-box { overflow-y: visible; }
+            .right-panel { flex: none; width: 100%; height: 50vh; min-height: 400px; }
+            .top-submenu { flex-wrap: wrap; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="audioFall" src="https://www.soundjay.com/nature/sounds/wind-howl-01.mp3"></audio>
+    <audio id="audioBoom" src="https://www.soundjay.com/nature/sounds/thunder-01.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="top-submenu">
+            <button class="btn-sub" onclick="navigasi('simulasi_1.html')">Simulasi 1</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_2.html')">Simulasi 2</button>
+            <button class="btn-sub active">Simulasi 3</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_4.html')">Simulasi 4</button>
+            <button class="btn-sub" onclick="navigasi('simulasi_5.html')">Simulasi 5</button>
+        </div>
+
+        <div class="content-body">
+            
+            <div class="left-panel">
+                <div class="vo-box">
+                    <h2>💥 Generator Kawah</h2>
+                    Kapten <span id="namaKapten" class="highlight">[Kapten]</span>! Mari uji hukum kinetik alam semesta.<br><br>
+                    Perhatikan perubahan <b>NAMA</b> batuan saat menembus lapisan atmosfer, dan lihat seberapa besar kawah yang tercipta di bumi!
+                </div>
+                
+                <div class="detail-box">
+                    <div class="layer-name">Panel Peluncuran</div>
+                    <div style="color: #cbd5e1; font-size: clamp(0.85rem, 1vw, 1rem); line-height: 1.5;">
+                        Ukuran kawah yang dihasilkan berbanding lurus dengan ukuran batu dan kuadrat kecepatannya. <i>Scroll ke bawah jika tombol tidak terlihat.</i>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-item">
+                            <div class="label-control"><span>Ukuran Batu (Diameter)</span> <span id="lblSize" style="color:#fff;">10 m</span></div>
+                            <input type="range" id="rockSize" class="slider-control" min="5" max="100" step="5" value="10" oninput="updateLabels()">
+                        </div>
+                        <div class="control-item" style="margin-top:2vh;">
+                            <div class="label-control"><span>Kecepatan Jatuh</span> <span id="lblSpeed" style="color:#fff;">15 km/s</span></div>
+                            <input type="range" id="rockSpeed" class="slider-control" min="10" max="70" step="5" value="15" oninput="updateLabels()">
+                        </div>
+                    </div>
+
+                    <button class="btn-launch" id="btnDrop" onclick="jatuhkanMeteor()">JATUHKAN! 🚀</button>
+                </div>
+            </div>
+
+            <div class="right-panel" id="arenaPanel">
+                
+                <div class="hud-status">
+                    <div class="hud-label">STATUS OBJEK SAAT INI:</div>
+                    <div class="hud-name" id="hudName">MENUNGGU...</div>
+                </div>
+
+                <div class="hud-result" id="hudResult">
+                    <div class="res-title">DIAMETER KAWAH</div>
+                    <div class="res-value" id="resValue">0 m</div>
+                    <div style="color:#cbd5e1; font-size:0.8rem;">Dampak Ledakan Tercatat</div>
+                </div>
+
+                <div class="zone-space">
+                    <div class="zone-label" style="color:#fff;">Luar Angkasa</div>
+                </div>
+                <div class="zone-atmos">
+                    <div class="zone-label" style="color:var(--neon-cyan);">Atmosfer Bumi</div>
+                </div>
+                <div class="zone-ground">
+                    <div class="zone-label" style="color:#A5D6A7;">Permukaan</div>
+                </div>
+
+                <div class="rock-obj" id="rockObj"></div>
+                <div class="crater-obj" id="craterObj"></div>
+                <div class="explosion-obj" id="explosionObj"></div>
+
+            </div>
+        </div>
+
+        <div class="nav-container-fixed">
+            <button class="btn-nav-f" onclick="navigasi('simulasi_2.html')">⬅ KEMBALI SIMULASI 2</button>
+            <button class="btn-nav-f next" onclick="navigasi('simulasi_4.html')">LANJUT SIMULASI 4 ➡</button>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = astronotName.toUpperCase();
+            updateLabels();
+        };
+
+        function navigasi(url) {
+            document.getElementById('audioPop').play().catch(()=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+
+        // --- ENGINE SIMULATOR KAWAH ---
+        const sliderSize = document.getElementById('rockSize');
+        const sliderSpeed = document.getElementById('rockSpeed');
+        const lblSize = document.getElementById('lblSize');
+        const lblSpeed = document.getElementById('lblSpeed');
+        
+        const rock = document.getElementById('rockObj');
+        const crater = document.getElementById('craterObj');
+        const explosion = document.getElementById('explosionObj');
+        const arena = document.getElementById('arenaPanel');
+        
+        const hudName = document.getElementById('hudName');
+        const hudResult = document.getElementById('hudResult');
+        const resValue = document.getElementById('resValue');
+        const btnDrop = document.getElementById('btnDrop');
+
+        let isFalling = false;
+
+        function updateLabels() {
+            lblSize.innerText = sliderSize.value + " m";
+            lblSpeed.innerText = sliderSpeed.value + " km/s";
+            
+            // Visualisasikan ukuran batu awal di luar angkasa
+            if(!isFalling) {
+                const pxSize = Math.max(20, (sliderSize.value / 100) * 80);
+                rock.style.width = pxSize + "px";
+                rock.style.height = pxSize + "px";
+                rock.style.top = "10%";
+                rock.classList.remove('burning');
+                hudName.innerText = "METEOROID";
+                hudName.style.color = "#cbd5e1";
+                hudName.style.textShadow = "none";
+            }
+        }
+
+        function jatuhkanMeteor() {
+            if(isFalling) return;
+            isFalling = true;
+            btnDrop.style.opacity = "0.5";
+            btnDrop.style.pointerEvents = "none";
+
+            const sndFall = document.getElementById('audioFall');
+            sndFall.currentTime = 0; sndFall.volume = 0.5; sndFall.play().catch(()=>{});
+
+            // Reset UI
+            hudResult.classList.remove('show');
+            crater.classList.remove('impact');
+            explosion.classList.remove('boom');
+            arena.classList.remove('shake-screen');
+            
+            const speed = parseInt(sliderSpeed.value);
+            const fallDuration = Math.max(0.5, 2.5 - (speed / 70) * 2); 
+            
+            rock.style.transition = `top ${fallDuration}s ease-in`;
+            rock.classList.remove('burning');
+            
+            // Mulai Jatuh
+            setTimeout(() => {
+                rock.style.top = "85%"; 
+            }, 50);
+
+            // Perubahan nama saat masuk atmosfer
+            setTimeout(() => {
+                rock.classList.add('burning');
+                hudName.innerText = "METEOR";
+                hudName.style.color = "var(--neon-orange)";
+                hudName.style.textShadow = "var(--orange-glow)";
+            }, (fallDuration * 1000) * 0.45); // Kira-kira saat melewati garis atmosfer
+
+            // Tabrakan (Impact)
+            setTimeout(() => {
+                sndFall.pause();
+                const sndBoom = document.getElementById('audioBoom');
+                sndBoom.currentTime = 0; sndBoom.play().catch(()=>{});
+
+                rock.style.transition = "none";
+                rock.style.top = "-100px"; 
+                rock.classList.remove('burning');
+
+                hudName.innerText = "METEORIT";
+                hudName.style.color = "var(--neon-pink)";
+                hudName.style.textShadow = "var(--pink-glow)";
+
+                arena.classList.add('shake-screen');
+                explosion.classList.add('boom');
+                
+                const size = parseInt(sliderSize.value);
+                const craterDiameter = Math.round(size * (speed / 10) * 1.5);
+                
+                const craterPx = Math.min(Math.max(50, craterDiameter), 400); 
+                crater.style.width = craterPx + "px";
+                crater.style.height = (craterPx / 3) + "px"; 
+                crater.classList.add('impact');
+
+                resValue.innerText = craterDiameter.toLocaleString('id-ID') + " m";
+                hudResult.classList.add('show');
+
+                isFalling = false;
+                btnDrop.style.opacity = "1";
+                btnDrop.style.pointerEvents = "auto";
+                btnDrop.innerText = "JATUHKAN LAGI! 🚀";
+
+            }, fallDuration * 1000);
+        }
+    </script>
+</body>
+</html>

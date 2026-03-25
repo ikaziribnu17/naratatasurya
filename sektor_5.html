@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Sektor 05 - Gerhana</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA STANDAR --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --pink-glow: 0 0 15px rgba(255, 51, 102, 0.6);
+            --green-glow: 0 0 15px rgba(0, 230, 118, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            
+            /* KUNCI LAYAR ANTI-TERPOTONG STANDAR BARU */
+            min-height: 100dvh;
+            width: 100vw;
+            overflow: hidden; 
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.4; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.05) translate(-2%, 2%); }
+        }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- CONTAINER UTAMA (Split Layout 16:9) --- */
+        .main-wrapper {
+            position: relative; z-index: 20;
+            width: 96%; max-width: 1800px; 
+            height: 94dvh; 
+            display: flex; flex-direction: row; gap: 3vw;
+            animation: fadeIn 0.8s ease-out;
+            padding: 2vh 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* --- KIRI: PANEL TEKS & MENU (42% Lebar) --- */
+        .left-panel {
+            flex: 0.42;
+            display: flex; flex-direction: column; justify-content: space-between; 
+            height: 100%; gap: 1.5vh; 
+        }
+        
+        .sector-title {
+            font-family: var(--font-heading); 
+            font-size: clamp(2rem, 3.2vw, 4rem); 
+            font-weight: 700; color: var(--neon-cyan); text-transform: uppercase; 
+            line-height: 1.1; text-shadow: var(--cyan-glow); 
+            flex-shrink: 0; margin-bottom: 0;
+        }
+        
+        /* Kotak Intro */
+        .vo-box {
+            background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 242, 255, 0.3); border-left: 6px solid var(--neon-cyan);
+            padding: 1.5vh 1.5vw; border-radius: 12px; 
+            font-family: var(--font-body); 
+            font-size: clamp(0.9rem, 1.2vw, 1.3rem); 
+            color: #E2E8F0; line-height: 1.5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+        }
+        .highlight { color: var(--neon-orange); font-weight: 600; text-shadow: var(--orange-glow);}
+
+        /* Area Tombol Materi */
+        .menu-materi {
+            flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2vh;
+        }
+
+        .btn-materi {
+            width: 100%; background: rgba(45, 27, 78, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2); color: #fff;
+            font-family: var(--font-heading); font-size: clamp(1.2rem, 1.8vw, 2rem);
+            padding: 2vh 2vw; border-radius: 15px; cursor: pointer; transition: 0.3s;
+            text-align: left; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); flex-shrink: 0;
+        }
+        
+        .btn-materi span { font-size: clamp(1.5rem, 2vw, 2.5rem); }
+
+        .btn-materi:hover { transform: translateX(10px); background: rgba(0, 242, 255, 0.1); border-color: var(--neon-cyan); }
+        .btn-materi.active { transform: translateX(10px); }
+        
+        /* Warna Khusus Tombol Aktif */
+        #btn-solar.active { background: var(--neon-orange); color: var(--space-blue); border-color: var(--neon-orange); box-shadow: var(--orange-glow); }
+        #btn-lunar.active { background: var(--neon-pink); color: var(--space-blue); border-color: var(--neon-pink); box-shadow: var(--pink-glow); }
+        #btn-netral.active { background: var(--neon-cyan); color: var(--space-blue); border-color: var(--neon-cyan); box-shadow: var(--cyan-glow); }
+
+        /* --- NAVIGASI STANDAR (POSISI TETAP DI BAWAH) --- */
+        .nav-container {
+            display: flex; gap: 2vh; flex-direction: row; margin-top: auto; flex-shrink: 0;
+        }
+        
+        .btn-nav {
+            flex: 1; background: rgba(0, 242, 255, 0.1); 
+            border: 2px solid var(--neon-cyan); color: var(--neon-cyan); 
+            font-family: var(--font-heading); 
+            font-size: clamp(0.9rem, 1.2vw, 1.3rem); 
+            padding: 1.5vh 0; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-nav svg { width: clamp(18px, 1.5vw, 22px); height: clamp(18px, 1.5vw, 22px); transition: 0.3s; }
+        
+        .btn-nav.back { fill: var(--neon-cyan); }
+        .btn-nav.back:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-3px);}
+        .btn-nav.back:hover svg { fill: var(--space-blue); transform: translateX(-5px); }
+
+        .btn-nav.next { border-color: var(--neon-green); color: var(--neon-green); fill: var(--neon-green); background: rgba(0, 230, 118, 0.1);}
+        .btn-nav.next:hover { background: var(--neon-green); color: var(--space-blue); box-shadow: var(--green-glow); transform: translateY(-3px);}
+        .btn-nav.next:hover svg { fill: var(--space-blue); transform: translateX(5px); }
+
+        /* --- KANAN: PANEL VISUAL & DESKRIPSI (58% Lebar) --- */
+        .right-panel {
+            flex: 0.58; display: flex; flex-direction: column; gap: 2vh;
+        }
+
+        /* Arena Visual Gerhana */
+        .visual-arena {
+            flex: 0.55; background: rgba(11, 13, 23, 0.6); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 20px;
+            position: relative; overflow: hidden; box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        /* Objek Langit & Bayangan (Animasi Berbasis Posisi Top/Left) */
+        .sun-obj {
+            position: absolute; left: -5%; top: 50%; transform: translateY(-50%);
+            width: clamp(150px, 20vw, 300px); height: clamp(150px, 20vw, 300px);
+            background: radial-gradient(circle, #FFFFFF, #FFD700, #FF7A00, transparent 70%);
+            border-radius: 50%; box-shadow: 0 0 100px rgba(255, 122, 0, 0.8);
+            z-index: 1; pointer-events: none;
+        }
+
+        .astro-obj {
+            position: absolute; transform: translate(-50%, -50%);
+            transition: all 1.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+        }
+
+        .earth-obj {
+            width: clamp(50px, 8vw, 100px); height: clamp(50px, 8vw, 100px);
+            border-radius: 50%; background-color: #000;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/3/30/Globespin.gif') no-repeat center center/cover;
+            box-shadow: inset -10px -10px 20px rgba(0,0,0,0.8), 0 0 15px rgba(51, 255, 255, 0.2);
+        }
+
+        .moon-obj {
+            width: clamp(20px, 3vw, 40px); height: clamp(20px, 3vw, 40px);
+            border-radius: 50%; background: #CBD5E1;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.8);
+        }
+
+        /* Kerucut Bayangan (Umbra & Penumbra) */
+        .shadow-cone {
+            position: absolute; left: 50%; top: 50%; transform: translateY(-50%);
+            height: 100%; z-index: -1; pointer-events: none;
+            transition: all 1.5s ease; opacity: 0;
+        }
+        
+        /* Bayangan Bumi */
+        #earth-shadow {
+            width: clamp(200px, 30vw, 400px);
+            background: linear-gradient(to right, rgba(0,0,0,0.9), rgba(0,0,0,0.4), transparent);
+            clip-path: polygon(0 0, 100% 30%, 100% 70%, 0 100%);
+        }
+
+        /* Bayangan Bulan */
+        #moon-shadow {
+            width: clamp(100px, 15vw, 200px);
+            background: linear-gradient(to right, rgba(0,0,0,0.95), rgba(0,0,0,0.5), transparent);
+            clip-path: polygon(0 0, 100% 35%, 100% 65%, 0 100%);
+        }
+
+        /* --- KORDINAT STATE ANIMASI --- */
+        /* Netral */
+        .stage-netral #earth-obj { left: 70%; top: 50%; }
+        .stage-netral #moon-obj { left: 70%; top: 20%; } /* Di atas, tidak sejajar */
+        .stage-netral .shadow-cone { opacity: 0; }
+
+        /* Gerhana Matahari (Matahari -> Bulan -> Bumi) */
+        .stage-solar #earth-obj { left: 80%; top: 50%; }
+        .stage-solar #moon-obj { left: 50%; top: 50%; } /* Bulan di tengah */
+        .stage-solar #moon-shadow { opacity: 1; } /* Bayangan bulan aktif menutupi bumi */
+        .stage-solar #earth-shadow { opacity: 1; }
+
+        /* Gerhana Bulan (Matahari -> Bumi -> Bulan) */
+        .stage-lunar #earth-obj { left: 45%; top: 50%; }
+        .stage-lunar #moon-obj { left: 80%; top: 50%; background: #991B1B; box-shadow: 0 0 15px #DC2626;} /* Bulan masuk bayangan Bumi (Blood Moon) */
+        .stage-lunar #earth-shadow { opacity: 1; }
+        .stage-lunar #moon-shadow { opacity: 1; }
+
+
+        /* Kotak Detail Informasi Dinamis */
+        .info-card {
+            flex: 0.45; background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan); border-radius: 20px;
+            padding: 3vh 2vw; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            display: flex; flex-direction: column; overflow-y: auto;
+        }
+        .info-card::-webkit-scrollbar { width: 6px; }
+        .info-card::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+
+        .info-title { font-family: var(--font-heading); font-size: clamp(1.8rem, 2.5vw, 3rem); color: var(--neon-cyan); text-transform: uppercase; line-height: 1; text-shadow: var(--cyan-glow); margin-bottom: 2vh; border-bottom: 2px dashed rgba(255,255,255,0.2); padding-bottom: 1vh;}
+        
+        .info-desc { font-size: clamp(1rem, 1.3vw, 1.4rem); color: #cbd5e1; margin-bottom: 2vh; line-height: 1.5; }
+        
+        .info-effects { list-style: none; display: flex; flex-direction: column; gap: 1.5vh; }
+        .info-effects li {
+            background: rgba(0, 242, 255, 0.1); border-left: 4px solid var(--neon-cyan);
+            padding: 1.5vh 1.5vw; border-radius: 8px; font-size: clamp(0.95rem, 1.2vw, 1.3rem); color: #fff;
+        }
+
+        /* --- RESPONSIVE MOBILE & TABLET --- */
+        @media (max-width: 1024px) {
+            body { overflow-y: auto; align-items: flex-start; padding: 20px 0; }
+            .main-wrapper { flex-direction: column; width: 95%; height: auto; gap: 20px; padding: 15px; }
+            .left-panel, .right-panel { flex: none; width: 100%; height: auto; }
+            .sector-title { text-align: center; }
+            .nav-container { flex-direction: column; margin-top: 20px;}
+            .visual-arena { min-height: 350px; }
+            
+            /* Penyesuaian kordinat HP */
+            .stage-netral #earth-obj { left: 75%; }
+            .stage-netral #moon-obj { left: 75%; top: 15%; }
+            .stage-solar #earth-obj { left: 85%; }
+            .stage-solar #moon-obj { left: 55%; }
+            .stage-lunar #earth-obj { left: 45%; }
+            .stage-lunar #moon-obj { left: 85%; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioHum" src="https://www.soundjay.com/nature/sounds/space-drone-1.mp3" loop autoplay></audio>
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="audioWoosh" src="https://www.soundjay.com/nature/sounds/wind-howl-01.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-wrapper">
+        
+        <div class="left-panel">
+            <h1 class="sector-title">🌑 Gerhana</h1>
+            
+            <div class="vo-box">
+                "Peringatan anomali cahaya, Kapten <span id="namaKapten" class="highlight">[Kapten]</span>! Kadang kala, orbit Bulan membawanya tepat memotong garis lurus antara Bumi dan Matahari. Penyejajaran posisi ini akan menciptakan bayangan raksasa yang kita sebut Gerhana!"
+            </div>
+
+            <div class="menu-materi">
+                <button class="btn-materi" id="btn-solar" onclick="tampilGerhana('solar')">
+                    Gerhana Matahari <span>🌞</span>
+                </button>
+                <button class="btn-materi" id="btn-lunar" onclick="tampilGerhana('lunar')">
+                    Gerhana Bulan <span>🌘</span>
+                </button>
+                <button class="btn-materi active" id="btn-netral" onclick="tampilGerhana('netral')">
+                    Reset (Posisi Normal) <span>🌍</span>
+                </button>
+            </div>
+
+            <div class="nav-container">
+                <button class="btn-nav back" onclick="navigasi('sektor_4 halaman bulan.html')">
+                    <svg viewBox="0 0 24 24"><path d="M15.41,16.59L10.83,12l4.58-4.59L14,6l-6,6l6,6L15.41,16.59z"/></svg>
+                    KEMBALI KE BULAN
+                </button>
+                <button class="btn-nav next" onclick="navigasi('menu.html')">
+                    SELESAI MISI
+                    <svg viewBox="0 0 24 24"><path d="M8.59,16.59L13.17,12L8.59,7.41L10,6l6,6l-6,6L8.59,16.59z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            
+            <div id="visual-arena" class="visual-arena stage-netral">
+                
+                <div class="sun-obj"></div>
+
+                <div class="astro-obj earth-obj" id="earth-obj">
+                    <div class="shadow-cone" id="earth-shadow"></div>
+                </div>
+
+                <div class="astro-obj moon-obj" id="moon-obj">
+                    <div class="shadow-cone" id="moon-shadow"></div>
+                </div>
+
+            </div>
+
+            <div id="info-card" class="info-card">
+                <div id="info-title" class="info-title" style="color:var(--neon-cyan); text-shadow:var(--cyan-glow);">Orbit Netral</div>
+                
+                <div id="info-desc" class="info-desc">
+                    Sebagian besar waktu, Bulan mengorbit sedikit miring (±5 derajat) terhadap bidang orbit Bumi. Oleh karena itu, bayangan Bulan biasanya jatuh di atas atau di bawah Bumi, tidak menimbulkan gerhana.
+                </div>
+                
+                <ul id="info-effects" class="info-effects" style="display:none;">
+                    <li id="li-umbra"><b>⚫ Umbra:</b> Bayangan inti yang paling gelap.</li>
+                    <li id="li-penumbra"><b>🌫️ Penumbra:</b> Bayangan luar yang lebih terang/kabur.</li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        window.onload = () => {
+            const astronotName = localStorage.getItem('AstronotName') || 'Penjelajah';
+            document.getElementById('namaKapten').innerText = "KAPTEN " + astronotName.toUpperCase();
+            
+            const bgm = document.getElementById('audioHum');
+            if(bgm) bgm.volume = 0.1;
+        };
+
+        const dataGerhana = {
+            netral: {
+                title: "Orbit Netral", color: "var(--neon-cyan)",
+                desc: "Sebagian besar waktu, Bulan mengorbit sedikit miring (±5 derajat) terhadap bidang orbit Bumi. Oleh karena itu, bayangan Bulan biasanya jatuh di atas atau di bawah Bumi, tidak menimbulkan gerhana.",
+                showDict: false
+            },
+            solar: {
+                title: "Gerhana Matahari", color: "var(--neon-orange)",
+                desc: "Posisi sejajar: <b>Matahari ➔ Bulan ➔ Bumi</b>.<br><br>Bayangan <b>Umbra</b> Bulan yang kecil menabrak permukaan Bumi. Wilayah yang terkena Umbra akan mengalami gelap total pada siang hari selama maksimal ±7 menit. Suhu dapat turun tiba-tiba!",
+                showDict: true
+            },
+            lunar: {
+                title: "Gerhana Bulan", color: "var(--neon-pink)",
+                desc: "Posisi sejajar: <b>Matahari ➔ Bumi ➔ Bulan</b>.<br><br>Bumi menghalangi cahaya Matahari sehingga memproyeksikan bayangan raksasa. Bulan terjebak penuh di dalam <b>Umbra</b> Bumi, namun cahaya yang dibiaskan oleh atmosfer Bumi sering membuatnya tampak berwarna kemerahan <i>(Blood Moon)</i>.",
+                showDict: true
+            }
+        };
+
+        function tampilGerhana(jenis) {
+            // Putar SFX
+            const sound = document.getElementById('audioPop');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+            const woosh = document.getElementById('audioWoosh');
+            woosh.volume = 0.3; woosh.currentTime = 0; woosh.play().catch(e=>{});
+
+            // Ganti Status Kelas Animasi Visual Arena
+            const arena = document.getElementById('visual-arena');
+            arena.className = 'visual-arena stage-' + jenis;
+
+            // Update Tombol Menu
+            document.getElementById('btn-solar').classList.remove('active');
+            document.getElementById('btn-lunar').classList.remove('active');
+            document.getElementById('btn-netral').classList.remove('active');
+            document.getElementById('btn-' + jenis).classList.add('active');
+
+            // Update Teks Informasi
+            const data = dataGerhana[jenis];
+            const titleEl = document.getElementById('info-title');
+            titleEl.innerHTML = data.title;
+            titleEl.style.color = data.color;
+            titleEl.style.textShadow = `0 0 15px ${data.color}`;
+
+            document.getElementById('info-desc').innerHTML = data.desc;
+            
+            // Tampilkan atau sembunyikan kamus Umbra/Penumbra
+            const listEffects = document.getElementById('info-effects');
+            if(data.showDict) {
+                listEffects.style.display = 'flex';
+                document.getElementById('li-umbra').style.borderLeftColor = data.color;
+                document.getElementById('li-umbra').style.background = `rgba(${jenis==='solar'?'255,153,0':'255,51,102'}, 0.1)`;
+                document.getElementById('li-penumbra').style.borderLeftColor = data.color;
+                document.getElementById('li-penumbra').style.background = `rgba(${jenis==='solar'?'255,153,0':'255,51,102'}, 0.1)`;
+            } else {
+                listEffects.style.display = 'none';
+            }
+        }
+
+        function navigasi(url) {
+            const sound = document.getElementById('audioPop');
+            sound.currentTime = 0; sound.play().catch(e=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Mission Brief</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --galactic-purple: #2D1B4E;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --ui-bg: rgba(11, 13, 23, 0.85);
+            --error-red: #FF3366;
+            
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            background-color: var(--space-blue);
+            color: #ffffff;
+            font-family: var(--font-body);
+            height: 100dvh;
+            width: 100vw;
+            overflow-x: hidden;
+            overflow-y: auto; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.5; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace {
+            0% { transform: scale(1) translate(0, 0); }
+            100% { transform: scale(1.05) translate(-2%, 2%); }
+        }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1);
+            pointer-events: none; z-index: 10;
+        }
+
+        /* --- LAYOUT UTAMA (16:9 Landscape Feel) --- */
+        .main-container {
+            position: relative; z-index: 20;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2vh 4vw; gap: 4vw;
+            width: 100%; max-width: 1200px; /* Sedikit lebih kecil agar fokus */
+        }
+
+        /* PANEL KIRI: ASTRO-BOT DUDUK */
+        .left-panel {
+            flex: 0.4;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            animation: slideRight 1s ease-out;
+        }
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
+
+        .astro-bot-container {
+            animation: floatSlow 4s ease-in-out infinite;
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.6));
+        }
+        .astro-bot-img {
+            width: clamp(200px, 25vw, 350px);
+            height: auto;
+            object-fit: contain;
+        }
+        @keyframes floatSlow { 
+            0%, 100% { transform: translateY(0); } 
+            50% { transform: translateY(-10px); } 
+        }
+
+        /* PANEL KANAN: KONTEN MATERI & PEMANTIK */
+        .right-panel {
+            flex: 0.6;
+            animation: slideLeft 1s ease-out;
+            display: flex; flex-direction: column;
+        }
+        @keyframes slideLeft { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
+        .content-box {
+            background: var(--ui-bg); backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 242, 255, 0.3); border-radius: 20px;
+            padding: 4vh 3vw; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(45, 27, 78, 0.5);
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .header-section {
+            border-bottom: 2px dashed rgba(0, 242, 255, 0.3);
+            padding-bottom: 15px; margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-family: var(--font-heading); color: var(--neon-orange);
+            font-size: clamp(1rem, 1.2vw, 1.2rem); text-transform: uppercase; letter-spacing: 2px;
+            margin-bottom: 5px; text-shadow: var(--orange-glow);
+        }
+
+        .title {
+            font-family: var(--font-heading); font-size: clamp(2rem, 3vw, 2.8rem);
+            color: #fff; text-shadow: var(--cyan-glow); text-transform: uppercase; letter-spacing: 1px;
+            line-height: 1.1;
+        }
+
+        .paragraph {
+            color: #E2E8F0; font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+            line-height: 1.6; text-align: justify;
+        }
+
+        /* List Pertanyaan Pemantik */
+        .question-box {
+            background: rgba(45, 27, 78, 0.4); border-left: 4px solid var(--neon-cyan);
+            padding: 20px; border-radius: 0 10px 10px 0;
+            margin-top: 10px;
+        }
+        
+        .question-title {
+            font-family: var(--font-heading); color: var(--neon-cyan);
+            font-size: 1.1rem; margin-bottom: 10px; letter-spacing: 0.5px;
+        }
+
+        .question-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .question-list li {
+            position: relative; padding-left: 25px; color: #cbd5e1;
+            font-size: clamp(0.9rem, 1vw, 1.05rem); line-height: 1.5;
+        }
+        .question-list li::before {
+            content: '✦'; position: absolute; left: 0; color: var(--neon-orange);
+            font-size: 1.2rem; line-height: 1; text-shadow: var(--orange-glow);
+        }
+
+        /* TOMBOL AKSI */
+        .btn-action {
+            align-self: flex-start; margin-top: 15px;
+            background: rgba(0, 242, 255, 0.1); border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan); font-family: var(--font-heading);
+            font-size: clamp(1rem, 1.2vw, 1.2rem); font-weight: 600; text-transform: uppercase;
+            padding: 12px 30px; border-radius: 8px; cursor: pointer;
+            transition: all 0.3s ease; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 10px;
+            text-decoration: none;
+        }
+        .btn-action svg { width: 20px; height: 20px; fill: var(--neon-cyan); transition: 0.3s; }
+        
+        .btn-action:hover {
+            background: var(--neon-cyan); color: var(--space-blue);
+            box-shadow: var(--cyan-glow); transform: translateY(-3px);
+        }
+        .btn-action:hover svg { fill: var(--space-blue); transform: translateX(5px); }
+
+        /* --- RESPONSIVE MOBILE (9:16 POTRET) --- */
+        @media (max-width: 850px) {
+            body { align-items: flex-start; padding: 20px 0; }
+            .main-container { flex-direction: column; padding: 20px 15px; gap: 10px; }
+            .left-panel { flex: none; width: 100%; margin-bottom: -20px; z-index: 2; }
+            .astro-bot-img { width: 180px; } 
+            .right-panel { flex: none; width: 100%; z-index: 1; }
+            .content-box { padding: 30px 20px; padding-top: 40px; }
+            .btn-action { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-container">
+        
+        <div class="left-panel">
+            <div class="astro-bot-container">
+                <img src="https://raw.githubusercontent.com/ikaziribnu17/naratatasurya/refs/heads/main/astro%20duduk.png" alt="Astro-Bot Duduk" class="astro-bot-img">
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="content-box">
+                
+                <div class="header-section">
+                    <div class="subtitle">Sesi Pemanasan Mesin</div>
+                    <h1 class="title">MISSION BRIEF</h1>
+                </div>
+
+                <p class="paragraph">
+                    Perhatian, Kadet! Sebelum kita meluncur menembus atmosfer dan menjelajahi luasnya tata surya, mari sejenak melihat ke luar jendela kabin. Alam semesta menyimpan miliaran misteri yang menakjubkan. Bumi yang kita pijak saat ini hanyalah satu titik kecil di tengah lautan bintang yang tak bertepi.
+                </p>
+
+                <div class="question-box">
+                    <h3 class="question-title">Transmisi Pemantik Pemikiran:</h3>
+                    <ul class="question-list">
+                        <li>Pernahkah kamu menatap langit malam? Benda langit apa saja yang berhasil kamu amati?</li>
+                        <li>Menurutmu, apakah Bumi adalah satu-satunya benda yang mengelilingi Matahari?</li>
+                        <li>Mengapa planet-planet bisa terus berputar pada jalurnya tanpa saling bertabrakan satu sama lain?</li>
+                    </ul>
+                </div>
+
+                <a href="menu.html" class="btn-action">
+                    Mari Selesaikan Misi
+                    <svg viewBox="0 0 24 24"><path d="M5,13h11.17l-4.88,4.88c-0.39,0.39-0.39,1.03,0,1.42c0.39,0.39,1.02,0.39,1.41,0l6.59-6.59c0.39-0.39,0.39-1.02,0-1.41 l-6.58-6.6c-0.39-0.39-1.02-0.39-1.41,0c-0.39,0.39-0.39,1.02,0,1.41L16.17,11H5c-0.55,0-1,0.45-1,1C4,12.55,4.45,13,5,13z"/></svg>
+                </a>
+
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
