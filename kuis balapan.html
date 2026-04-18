@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Balapan Roket Multitouch</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        /* Anti-Seleksi untuk Layar Sentuh Aggresif */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: manipulation; }
+
+        body {
+            background-color: var(--space-blue); color: #ffffff;
+            font-family: var(--font-body); height: 100dvh; width: 100vw;
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- BACKGROUND KOSMIK --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.3; animation: panSpace 60s infinite alternate linear; pointer-events: none;
+        }
+        @keyframes panSpace { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.05) translate(-2%, 2%); } }
+
+        /* --- LAYER SCREENS --- */
+        .screen {
+            position: relative; z-index: 20; width: 100%; height: 100%;
+            display: none; animation: fadeIn 0.5s ease-out;
+        }
+        .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+        /* =========================================
+           SCREEN 1: SETUP PESERTA
+        ========================================= */
+        .setup-box {
+            background: rgba(11, 13, 23, 0.85); backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan); border-radius: 20px; width: 90%; max-width: 500px;
+            padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,242,255,0.2);
+            text-align: center; 
+        }
+        .setup-title { font-family: var(--font-heading); font-size: 2rem; color: var(--neon-cyan); text-shadow: var(--cyan-glow); margin-bottom: 20px; text-transform: uppercase;}
+        
+        .input-group { margin-bottom: 20px; text-align: left;}
+        .input-group label { display: block; font-family: var(--font-heading); color: #cbd5e1; margin-bottom: 8px;}
+        .input-group input {
+            width: 100%; background: rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.2);
+            color: #fff; padding: 12px; border-radius: 10px; font-family: var(--font-body); font-size: 1.1rem;
+            outline: none; transition: 0.3s;
+        }
+        .input-p1:focus { border-color: var(--neon-cyan) !important; box-shadow: var(--cyan-glow) !important; }
+        .input-p2:focus { border-color: var(--neon-orange) !important; box-shadow: var(--orange-glow) !important; }
+
+        .btn-start {
+            background: rgba(0, 230, 118, 0.1); border: 2px solid var(--neon-green);
+            color: var(--neon-green); font-family: var(--font-heading); font-size: 1.3rem;
+            padding: 15px 30px; border-radius: 12px; cursor: pointer; transition: 0.3s; width: 100%;
+            margin-top: 10px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .btn-start:hover { background: var(--neon-green); color: var(--space-blue); box-shadow: 0 0 15px rgba(0,230,118,0.6); }
+
+        /* =========================================
+           SCREEN 2: ARENA SPLIT-SCREEN (MULTITOUCH)
+        ========================================= */
+        .arena-container {
+            display: flex; flex-direction: row; width: 100%; height: 100vh;
+        }
+
+        /* ZONA PEMAIN UMUM */
+        .player-zone {
+            flex: 1; display: flex; flex-direction: row; padding: 2vh 1vw; gap: 1vw;
+            background: rgba(11, 13, 23, 0.6); backdrop-filter: blur(5px);
+        }
+        
+        /* ZONA P1 (Kiri) */
+        .zone-p1 { border-right: 2px dashed rgba(0, 242, 255, 0.3); }
+        /* ZONA P2 (Kanan) */
+        .zone-p2 { border-left: 2px dashed rgba(255, 153, 0, 0.3); flex-direction: row-reverse; } /* Track di tengah */
+
+        /* AREA KUIS (Besar) */
+        .quiz-area {
+            flex: 0.85; display: flex; flex-direction: column; gap: 2vh; height: 100%;
+        }
+
+        .player-header {
+            font-family: var(--font-heading); font-size: clamp(1.5rem, 2.5vw, 2rem); 
+            text-align: center; padding: 1vh; border-radius: 10px; text-transform: uppercase;
+        }
+        .hdr-p1 { color: var(--neon-cyan); background: rgba(0,242,255,0.1); border: 1px solid var(--neon-cyan); box-shadow: var(--cyan-glow);}
+        .hdr-p2 { color: var(--neon-orange); background: rgba(255,153,0,0.1); border: 1px solid var(--neon-orange); box-shadow: var(--orange-glow);}
+
+        .question-box {
+            flex: 1; background: rgba(0, 0, 0, 0.5); border-radius: 15px; padding: 3vh 2vw;
+            display: flex; align-items: center; justify-content: center; text-align: center;
+            font-size: clamp(1.2rem, 1.8vw, 1.8rem); line-height: 1.5;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .options-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5vh; flex-shrink: 0;
+        }
+        .btn-option {
+            background: rgba(255,255,255,0.05); color: #fff; font-family: var(--font-body); 
+            font-size: clamp(1rem, 1.3vw, 1.3rem); padding: 2vh 1.5vw; border-radius: 12px; 
+            cursor: pointer; text-align: left; transition: 0.2s; border: 2px solid transparent;
+            display: flex; align-items: center; gap: 10px;
+        }
+        
+        /* Warna Interaksi Tombol P1 */
+        .zone-p1 .btn-option { border-color: rgba(0, 242, 255, 0.3); }
+        .zone-p1 .btn-option:active { background: rgba(0, 242, 255, 0.2); }
+        
+        /* Warna Interaksi Tombol P2 */
+        .zone-p2 .btn-option { border-color: rgba(255, 153, 0, 0.3); }
+        .zone-p2 .btn-option:active { background: rgba(255, 153, 0, 0.2); }
+
+        /* Animasi Benar/Salah (Berlaku untuk keduanya) */
+        .btn-option.correct { background: var(--neon-green) !important; border-color: var(--neon-green) !important; color: #000; font-weight: bold; box-shadow: 0 0 15px var(--neon-green); }
+        .btn-option.wrong { background: var(--neon-pink) !important; border-color: var(--neon-pink) !important; color: #fff; font-weight: bold; box-shadow: 0 0 15px var(--neon-pink); }
+
+        /* AREA TRACK (Kecil di Tengah) */
+        .track-area {
+            flex: 0.15; display: flex; flex-direction: column; align-items: center;
+            background: rgba(0,0,0,0.3); border-radius: 15px; padding: 1vh 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .finish-line { font-size: 2rem; margin-bottom: 5px; text-shadow: 0 0 10px #fff; }
+        
+        .track {
+            flex: 1; width: 40px; position: relative; border-left: 2px dashed rgba(255,255,255,0.2);
+            border-right: 2px dashed rgba(255,255,255,0.2);
+        }
+        .rocket-icon {
+            font-size: 2.5rem; position: absolute; bottom: 0%; left: 50%; transform: translateX(-50%);
+            transition: bottom 0.6s cubic-bezier(0.25, 1, 0.5, 1); filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+        }
+        
+        .score-display {
+            font-family: var(--font-heading); font-size: 2rem; margin-top: 10px;
+            background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 10px;
+        }
+
+        /* =========================================
+           SCREEN 3: WINNER MODAL
+        ========================================= */
+        .winner-modal {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
+            background: rgba(11, 13, 23, 0.95); z-index: 100;
+            display: none; justify-content: center; align-items: center; text-align: center;
+            flex-direction: column;
+        }
+        .winner-modal.active { display: flex; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        .trophy { font-size: 6rem; filter: drop-shadow(0 0 20px #FFD700); margin-bottom: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+
+        .winner-name { font-family: var(--font-heading); font-size: 3.5rem; color: #FFD700; text-shadow: 0 0 20px rgba(255,215,0,0.6); margin-bottom: 10px; text-transform: uppercase;}
+        .winner-desc { font-size: 1.2rem; color: #cbd5e1; margin-bottom: 30px; }
+
+        .btn-menu {
+            background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan); font-family: var(--font-heading); font-size: 1.2rem;
+            padding: 15px 30px; border-radius: 12px; cursor: pointer; transition: 0.3s;
+        }
+        .btn-menu:hover { background: var(--neon-cyan); color: #000; box-shadow: var(--cyan-glow); }
+
+        /* --- RESPONSIVE MOBILE (Hanya untuk jaga-jaga, fokus utama adalah Layar Besar) --- */
+        @media (max-width: 850px) {
+            .player-header { font-size: 1.2rem; }
+            .question-box { font-size: 1.1rem; padding: 15px; }
+            .btn-option { font-size: 0.9rem; padding: 10px; }
+            .track-area { flex: 0.2; }
+            .score-display { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="sfx-pop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3" preload="auto"></audio>
+    <audio id="sfx-correct" src="https://www.soundjay.com/buttons/sounds/button-09.mp3" preload="auto"></audio>
+    <audio id="sfx-wrong" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
+    <audio id="sfx-win" src="https://www.soundjay.com/misc/sounds/magic-chime-01.mp3" preload="auto"></audio>
+
+    <div class="nebula-bg"></div>
+
+    <div id="screen-setup" class="screen active">
+        <div class="setup-box">
+            <h1 class="setup-title">🚀 DAFTAR BALAPAN</h1>
+            <p style="color: #94a3b8; margin-bottom: 25px;">Siapa yang paling cepat mencapai skor 10?</p>
+            
+            <div class="input-group">
+                <label style="color: var(--neon-cyan);">Kadet Kiri (Biru)</label>
+                <input type="text" id="nameP1" class="input-p1" placeholder="Masukkan nama..." autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label style="color: var(--neon-orange);">Kadet Kanan (Jingga)</label>
+                <input type="text" id="nameP2" class="input-p2" placeholder="Masukkan nama..." autocomplete="off">
+            </div>
+            
+            <button class="btn-start" onclick="startGame()">MULAI BALAPAN</button>
+            <button class="btn-start" style="background:transparent; border-color:#cbd5e1; color:#cbd5e1; margin-top:10px;" onclick="window.location.href='menu 3 sektor.html'">KEMBALI</button>
+        </div>
+    </div>
+
+    <div id="screen-arena" class="screen">
+        <div class="arena-container">
+            
+            <div class="player-zone zone-p1">
+                <div class="quiz-area">
+                    <div class="player-header hdr-p1" id="hdr-p1">Kadet 1</div>
+                    <div class="question-box" id="q-box-p1">Memuat pertanyaan...</div>
+                    <div class="options-grid" id="opt-p1"></div>
+                </div>
+                <div class="track-area">
+                    <div class="finish-line">🌕</div>
+                    <div class="track">
+                        <div id="rocket-p1" class="rocket-icon">🚀</div>
+                    </div>
+                    <div class="score-display" id="score-p1" style="color: var(--neon-cyan);">0</div>
+                </div>
+            </div>
+
+            <div class="player-zone zone-p2">
+                <div class="quiz-area">
+                    <div class="player-header hdr-p2" id="hdr-p2">Kadet 2</div>
+                    <div class="question-box" id="q-box-p2">Memuat pertanyaan...</div>
+                    <div class="options-grid" id="opt-p2"></div>
+                </div>
+                <div class="track-area">
+                    <div class="finish-line">🌕</div>
+                    <div class="track">
+                        <div id="rocket-p2" class="rocket-icon" style="filter: hue-rotate(180deg) drop-shadow(0 5px 10px rgba(0,0,0,0.5));">🚀</div>
+                    </div>
+                    <div class="score-display" id="score-p2" style="color: var(--neon-orange);">0</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modal-winner" class="winner-modal">
+        <div class="trophy">🏆</div>
+        <div class="winner-name" id="winner-name">KAPTEN X WIN!</div>
+        <div class="winner-desc">Telah berhasil mencapai Bulan pertama dengan pengetahuan astronomi yang sempurna!</div>
+        <button class="btn-menu" onclick="window.location.reload()">REMATCH (MAIN LAGI)</button>
+        <button class="btn-menu" style="margin-top: 10px; background: transparent; border-color: #cbd5e1; color: #cbd5e1;" onclick="window.location.href='menu 3 sektor.html'">KEMBALI KE MENU</button>
+    </div>
+
+    <script>
+        // --- BANK SOAL (40 SOAL TATA SURYA) ---
+        const bankSoal = [
+            { q: "Pusat dari tata surya kita adalah...", o: ["Bumi", "Bulan", "Matahari", "Jupiter"], a: 2 },
+            { q: "Planet terdekat dengan Matahari adalah...", o: ["Venus", "Merkurius", "Mars", "Bumi"], a: 1 },
+            { q: "Planet terbesar di tata surya adalah...", o: ["Saturnus", "Uranus", "Neptunus", "Jupiter"], a: 3 },
+            { q: "Waktu yang dibutuhkan Bumi untuk mengelilingi Matahari disebut...", o: ["Rotasi", "Revolusi", "Kala Rotasi", "Orbit"], a: 1 },
+            { q: "Perputaran Bumi pada porosnya disebut...", o: ["Revolusi", "Rotasi", "Gravitasi", "Orbit"], a: 1 },
+            { q: "Planet yang dijuluki Planet Merah adalah...", o: ["Venus", "Jupiter", "Mars", "Uranus"], a: 2 },
+            { q: "Satelit alami yang dimiliki oleh Bumi adalah...", o: ["Phobos", "Titan", "Europa", "Bulan"], a: 3 },
+            { q: "Planet bercincin terbesar dan paling indah adalah...", o: ["Jupiter", "Uranus", "Neptunus", "Saturnus"], a: 3 },
+            { q: "Planet terpanas di tata surya akibat efek rumah kaca adalah...", o: ["Merkurius", "Venus", "Mars", "Jupiter"], a: 1 },
+            { q: "Akibat dari rotasi bumi adalah terjadinya...", o: ["Perubahan musim", "Siang dan malam", "Gerhana bulan", "Tahun kabisat"], a: 1 },
+            { q: "Pergerakan semu harian Matahari dari timur ke barat disebabkan oleh...", o: ["Revolusi Bumi", "Revolusi Matahari", "Rotasi Bumi", "Rotasi Matahari"], a: 2 },
+            { q: "Kala revolusi Bumi lamanya adalah...", o: ["24 Jam", "30 Hari", "365,25 Hari", "1 Tahun Cahaya"], a: 2 },
+            { q: "Planet terjauh dari Matahari saat ini adalah...", o: ["Pluto", "Uranus", "Neptunus", "Saturnus"], a: 2 },
+            { q: "Perbedaan waktu di berbagai negara (seperti WIB, WITA, WIT) dipengaruhi oleh...", o: ["Rotasi Bumi", "Revolusi Bumi", "Gerak Semu Matahari", "Bentuk Bumi yang bulat"], a: 0 },
+            { q: "Kemiringan poros Bumi saat berotasi dan berevolusi adalah...", o: ["15 derajat", "23,5 derajat", "45 derajat", "90 derajat"], a: 1 },
+            { q: "Tahun yang jumlah harinya 366 hari disebut...", o: ["Tahun Masehi", "Tahun Hijriah", "Tahun Kabisat", "Tahun Cahaya"], a: 2 },
+            { q: "Perubahan empat musim di negara subtropis disebabkan oleh...", o: ["Rotasi Bumi", "Jarak Bumi ke Bulan", "Gravitasi Matahari", "Revolusi Bumi"], a: 3 },
+            { q: "Planet luar yang berputar menggelinding dengan sumbu sangat miring adalah...", o: ["Saturnus", "Uranus", "Neptunus", "Jupiter"], a: 1 },
+            { q: "Bongkahan batu angkasa yang terbakar habis di atmosfer bumi sering disebut...", o: ["Bintang Jatuh (Meteor)", "Komet", "Asteroid", "Satelit"], a: 0 },
+            { q: "Benda langit berekor gas bersinar yang mengelilingi matahari disebut...", o: ["Asteroid", "Komet", "Meteoroid", "Planet Kerdil"], a: 1 },
+            { q: "Sisa meteor yang tidak habis terbakar dan jatuh menabrak permukaan Bumi disebut...", o: ["Meteoroid", "Meteor", "Meteorit", "Kawah"], a: 2 },
+            { q: "Kelompok planet dalam terdiri dari...", o: ["Merkurius, Venus, Bumi, Mars", "Jupiter, Saturnus, Uranus, Neptunus", "Bumi, Mars, Jupiter, Saturnus", "Merkurius, Venus, Mars, Jupiter"], a: 0 },
+            { q: "Sabuk asteroid sebagian besar terletak di antara orbit planet...", o: ["Bumi dan Mars", "Mars dan Jupiter", "Jupiter dan Saturnus", "Venus dan Bumi"], a: 1 },
+            { q: "Matahari sebagian besar tersusun oleh gas...", o: ["Oksigen dan Nitrogen", "Hidrogen dan Helium", "Karbon dioksida", "Metana dan Amonia"], a: 1 },
+            { q: "Lapisan cahaya putih terluar Matahari yang terlihat saat gerhana matahari total adalah...", o: ["Inti", "Fotosfer", "Kromosfer", "Korona"], a: 3 },
+            { q: "Planet yang mendapat julukan Bintang Fajar atau Bintang Senja adalah...", o: ["Merkurius", "Mars", "Venus", "Sirius"], a: 2 },
+            { q: "Dua satelit alami milik planet Mars bernama...", o: ["Titan & Europa", "Phobos & Deimos", "Io & Ganymede", "Triton & Charon"], a: 1 },
+            { q: "Planet Jovian (Raksasa Gas) tidak memiliki...", o: ["Permukaan padat", "Cincin", "Satelit", "Atmosfer"], a: 0 },
+            { q: "Daerah khatulistiwa (Ekuator) hanya memiliki dua musim karena...", o: ["Jaraknya sangat dekat dengan matahari", "Sinar matahari diterima stabil sepanjang tahun", "Kecepatan rotasinya paling lambat", "Tidak terpengaruh gravitasi bulan"], a: 1 },
+            { q: "Tahun kabisat terjadi setiap...", o: ["2 tahun sekali", "3 tahun sekali", "4 tahun sekali", "5 tahun sekali"], a: 2 },
+            { q: "Perubahan rasi bintang yang tampak dari bulan ke bulan diakibatkan oleh...", o: ["Revolusi Bumi", "Rotasi Bumi", "Revolusi Bulan", "Rotasi Matahari"], a: 0 },
+            { q: "Benda langit yang bentuknya bulat namun belum membersihkan lingkungan orbitnya disebut...", o: ["Satelit", "Asteroid", "Planet Kerdil", "Meteoroid"], a: 2 },
+            { q: "Titik di mana orbit planet berada paling dekat dengan Matahari disebut...", o: ["Aphelion", "Perihelion", "Apogee", "Perigee"], a: 1 },
+            { q: "Pluto saat ini diklasifikasikan ke dalam kelompok...", o: ["Planet Dalam", "Planet Luar", "Planet Kerdil (Dwarf Planet)", "Asteroid Besar"], a: 2 },
+            { q: "Gas yang memberikan warna biru kemerahan pada atmosfer Uranus dan Neptunus adalah...", o: ["Oksigen", "Metana", "Nitrogen", "Hidrogen"], a: 1 },
+            { q: "Galaksi tempat tata surya kita berada bernama...", o: ["Andromeda", "Bimasakti (Milky Way)", "Magellan", "Sombrero"], a: 1 },
+            { q: "Bintang yang terlihat paling terang di langit malam bumi adalah...", o: ["Polaris", "Matahari", "Sirius", "Alpha Centauri"], a: 2 },
+            { q: "Gaya yang menahan planet-planet agar tetap berada pada orbitnya adalah...", o: ["Gaya Magnet", "Gaya Gesek", "Gaya Gravitasi Matahari", "Gaya Dorong Gas"], a: 2 },
+            { q: "Satu hari di planet Venus lebih lama dibandingkan satu tahun di Venus. Hal ini karena...", o: ["Rotasinya sangat lambat", "Revolusinya sangat lambat", "Jaraknya sangat dekat ke Matahari", "Ukurannya sangat besar"], a: 0 },
+            { q: "Fase ketika seluruh bagian Bulan yang menghadap Bumi tersinari matahari disebut...", o: ["Bulan Baru", "Bulan Sabit", "Kuartal Pertama", "Bulan Purnama"], a: 3 }
+        ];
+
+        // --- MANAJEMEN STATE MULTITOUCH INDEPENDEN ---
+        // Player 1
+        let p1_name = "P1";
+        let p1_score = 0;
+        let p1_qList = [];
+        let p1_qIndex = 0;
+        let p1_isAnimating = false;
+
+        // Player 2
+        let p2_name = "P2";
+        let p2_score = 0;
+        let p2_qList = [];
+        let p2_qIndex = 0;
+        let p2_isAnimating = false;
+
+        const MAX_SCORE = 10;
+        let gameOver = false;
+
+        // --- SISTEM AUDIO MULTITOUCH (Audio Cloning) ---
+        // Karena disentuh bersamaan, audio biasa akan terpotong. Kita clone nodenya.
+        function playSound(audioId) {
+            const original = document.getElementById(audioId);
+            const clone = original.cloneNode();
+            clone.volume = 0.5;
+            clone.play().catch(()=>{});
+        }
+
+        // --- MULAI PERMAINAN ---
+        function startGame() {
+            playSound('sfx-pop');
+            const input1 = document.getElementById('nameP1').value.trim();
+            const input2 = document.getElementById('nameP2').value.trim();
+            
+            p1_name = input1 !== "" ? input1 : "Kadet Kiri";
+            p2_name = input2 !== "" ? input2 : "Kadet Kanan";
+
+            document.getElementById('hdr-p1').innerText = p1_name;
+            document.getElementById('hdr-p2').innerText = p2_name;
+
+            // Buat 2 Antrean Soal yang Berbeda untuk mencegah mereka mencontek satu sama lain
+            p1_qList = [...bankSoal].sort(() => Math.random() - 0.5);
+            p2_qList = [...bankSoal].sort(() => Math.random() - 0.5); // Diacak ulang
+
+            // Pindah Layar
+            document.getElementById('screen-setup').classList.remove('active');
+            document.getElementById('screen-arena').classList.add('active');
+
+            // Render soal pertama untuk masing-masing layar
+            loadQuestion(1);
+            loadQuestion(2);
+        }
+
+        // --- MUAT SOAL (INDEPENDEN) ---
+        function loadQuestion(playerNum) {
+            if (gameOver) return;
+
+            const isP1 = (playerNum === 1);
+            let qList = isP1 ? p1_qList : p2_qList;
+            let qIndex = isP1 ? p1_qIndex : p2_qIndex;
+
+            // Jaga-jaga jika soal habis (sangat jarang jika Max Score = 10)
+            if (qIndex >= qList.length) { qIndex = 0; if(isP1) p1_qIndex=0; else p2_qIndex=0; }
+
+            const qData = qList[qIndex];
+            const qBoxId = isP1 ? 'q-box-p1' : 'q-box-p2';
+            const optBoxId = isP1 ? 'opt-p1' : 'opt-p2';
+
+            document.getElementById(qBoxId).innerText = qData.q;
+            
+            const optionsContainer = document.getElementById(optBoxId);
+            optionsContainer.innerHTML = '';
+
+            const letters = ['A', 'B', 'C', 'D'];
+            const accentColor = isP1 ? "var(--neon-cyan)" : "var(--neon-orange)";
+
+            qData.o.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-option';
+                btn.innerHTML = `<span style="color:${accentColor}; font-weight:bold; font-size:1.2em;">${letters[index]}</span> ${optText}`;
+                
+                // Event Listener Independen
+                btn.onclick = () => checkAnswer(playerNum, index, btn, qData.a);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // --- CEK JAWABAN (INDEPENDEN) ---
+        function checkAnswer(playerNum, selectedIndex, btnElement, correctIndex) {
+            if (gameOver) return;
+
+            const isP1 = (playerNum === 1);
+            
+            // Cek apakah layar sedang mengunci karena baru saja menjawab (Animasi)
+            if (isP1 && p1_isAnimating) return;
+            if (!isP1 && p2_isAnimating) return;
+
+            // Kunci interaksi layar ini saja
+            if (isP1) p1_isAnimating = true; else p2_isAnimating = true;
+
+            const isCorrect = (selectedIndex === correctIndex);
+
+            if (isCorrect) {
+                // BENAR
+                playSound('sfx-correct');
+                btnElement.classList.add('correct');
+                
+                if (isP1) {
+                    p1_score++;
+                    document.getElementById('score-p1').innerText = p1_score;
+                    document.getElementById('rocket-p1').style.bottom = `${(p1_score/MAX_SCORE)*100}%`;
+                } else {
+                    p2_score++;
+                    document.getElementById('score-p2').innerText = p2_score;
+                    document.getElementById('rocket-p2').style.bottom = `${(p2_score/MAX_SCORE)*100}%`;
+                }
+            } else {
+                // SALAH
+                playSound('sfx-wrong');
+                btnElement.classList.add('wrong');
+                
+                // Tunjukkan jawaban benar di layarnya
+                const optBoxId = isP1 ? 'opt-p1' : 'opt-p2';
+                const allBtns = document.getElementById(optBoxId).querySelectorAll('.btn-option');
+                allBtns[correctIndex].style.border = "2px solid var(--neon-green)";
+                allBtns[correctIndex].style.color = "var(--neon-green)";
+            }
+
+            // Pengecekan Menang Mutlak
+            if (p1_score >= MAX_SCORE || p2_score >= MAX_SCORE) {
+                gameOver = true;
+                setTimeout(() => { showWinner(p1_score >= MAX_SCORE ? 1 : 2); }, 500);
+                return;
+            }
+
+            // Lanjut Soal Berikutnya Secara Independen
+            setTimeout(() => {
+                if(gameOver) return; // Batal render jika keburu game over
+                if (isP1) {
+                    p1_qIndex++;
+                    p1_isAnimating = false;
+                    loadQuestion(1);
+                } else {
+                    p2_qIndex++;
+                    p2_isAnimating = false;
+                    loadQuestion(2);
+                }
+            }, 1000); // 1 detik jeda evaluasi
+        }
+
+        // --- POPUP PEMENANG ---
+        function showWinner(winnerNum) {
+            playSound('sfx-win');
+            const modal = document.getElementById('modal-winner');
+            const winnerNameEl = document.getElementById('winner-name');
+            
+            if (winnerNum === 1) {
+                winnerNameEl.innerText = `${p1_name} MENANG!`;
+                winnerNameEl.style.color = "var(--neon-cyan)";
+            } else {
+                winnerNameEl.innerText = `${p2_name} MENANG!`;
+                winnerNameEl.style.color = "var(--neon-orange)";
+            }
+            
+            modal.classList.add('active');
+        }
+    </script>
+</body>
+</html>

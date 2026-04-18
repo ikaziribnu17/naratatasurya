@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Observasi Rotasi Bumi & Gerak Semu</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --neon-green: #00E676;
+            --neon-pink: #FF3366;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            margin: 0; overflow: hidden;
+            background-color: #020205; 
+            font-family: var(--font-body); color: white;
+            width: 100vw; height: 100dvh; position: relative;
+        }
+
+        /* --- KANVAS 3D --- */
+        #canvas-container {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: 1;
+        }
+
+        /* --- PANEL UI KONTROL (BASE) --- */
+        .ui-panel {
+            position: absolute; z-index: 10;
+            background: rgba(11, 13, 23, 0.85); backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan); border-radius: 15px;
+            padding: 2.5vh 1.5vw; 
+            max-height: 94vh; 
+            overflow-y: auto; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(0, 242, 255, 0.2);
+            display: flex; flex-direction: column; gap: 15px;
+            animation: fadeInPanel 0.8s ease-out;
+        }
+        @keyframes fadeInPanel { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .ui-panel::-webkit-scrollbar { width: 6px; }
+        .ui-panel::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .ui-panel::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 10px; }
+
+        /* PANEL KIRI & KANAN */
+        .panel-left { top: 3vh; left: 2vw; width: clamp(280px, 25vw, 350px); }
+        .panel-right {
+            top: 3vh; right: 2vw; width: clamp(260px, 22vw, 320px);
+            border-color: var(--neon-orange);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 15px rgba(255, 153, 0, 0.2);
+        }
+
+        .ui-title {
+            font-family: var(--font-heading); font-size: clamp(1.2rem, 1.5vw, 1.5rem); 
+            color: var(--neon-cyan); text-transform: uppercase; text-shadow: var(--cyan-glow);
+            border-bottom: 2px dashed rgba(0, 242, 255, 0.3); padding-bottom: 10px; text-align: center;
+            flex-shrink: 0;
+        }
+        .title-right { color: var(--neon-orange); text-shadow: var(--orange-glow); border-bottom-color: rgba(255, 153, 0, 0.3); }
+
+        /* KOTAK WAKTU UTAMA */
+        .time-box {
+            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-orange);
+            padding: 10px; text-align: center; border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(255, 153, 0, 0.2); flex-shrink: 0;
+        }
+        .time-label { font-size: 0.8rem; color: #cbd5e1; letter-spacing: 1px; margin-bottom: 5px; }
+        .time-value { font-family: var(--font-heading); font-size: clamp(2rem, 2.5vw, 2.5rem); color: var(--neon-orange); text-shadow: var(--orange-glow); line-height: 1;}
+
+        /* SLIDER & TOMBOL PLAY */
+        .slider-group { margin-top: 5px; flex-shrink: 0;}
+        .slider-control { width: 100%; cursor: pointer; accent-color: var(--neon-cyan); margin-top: 5px; }
+
+        .btn-play {
+            background: rgba(0, 230, 118, 0.1); border: 2px solid var(--neon-green);
+            color: var(--neon-green); font-family: var(--font-heading); font-size: 1rem;
+            padding: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; width: 100%; letter-spacing: 1px; flex-shrink: 0;
+        }
+        .btn-play:hover { background: var(--neon-green); color: var(--space-blue); box-shadow: 0 0 15px rgba(0,230,118,0.5); }
+        .btn-play.playing { background: rgba(255, 51, 102, 0.1); border-color: var(--neon-pink); color: var(--neon-pink); }
+        .btn-play.playing:hover { background: var(--neon-pink); color: #fff; box-shadow: 0 0 15px rgba(255,51,102,0.5); }
+
+        /* MODE PENGAMATAN */
+        .mode-selector {
+            background: rgba(45, 27, 78, 0.4); border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+        }
+        .btn-mode {
+            background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #cbd5e1; 
+            padding: 8px; border-radius: 6px; font-family: var(--font-body); font-size: 0.85rem; cursor: pointer; transition: 0.3s;
+        }
+        .btn-mode:hover { border-color: var(--neon-cyan); color: #fff; }
+        .btn-mode.active { background: rgba(0, 242, 255, 0.2); border-color: var(--neon-cyan); color: var(--neon-cyan); font-weight: 600; box-shadow: var(--cyan-glow); }
+
+        /* KOTAK NEGARA (WAKTU LOKAL) */
+        .countries-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; flex-shrink: 0; }
+        .country-box {
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(0, 242, 255, 0.2);
+            padding: 12px 5px; border-radius: 8px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: border-color 0.3s, box-shadow 0.3s;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .c-name { font-size: 0.75rem; color: #94a3b8; margin-bottom: 5px; font-weight: 600;}
+        .c-time { font-family: var(--font-heading); font-size: 1.4rem; color: #fff; letter-spacing: 1px;}
+        .c-status { font-size: 0.7rem; margin-top: 5px; text-transform: uppercase; font-weight: bold;}
+
+        /* PETUNJUK INTERAKSI */
+        .instructions { font-size: 0.8rem; color: #94a3b8; margin-top: auto; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); line-height: 1.6; flex-shrink: 0; }
+
+        /* --- MARKER KOTA (Di Atas Bumi 3D) --- */
+        .city-marker {
+            position: absolute; top: 0; left: 0; /* Base optimal untuk Transform */
+            transform: translate(-50%, -50%);
+            will-change: transform; /* Akselerasi grafis agar tidak patah-patah */
+            display: flex; flex-direction: column; align-items: center;
+            pointer-events: none; z-index: 20;
+        }
+        .city-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--neon-cyan); box-shadow: var(--cyan-glow); border: 2px solid #fff; }
+        .city-info {
+            background: rgba(11, 13, 23, 0.85); border: 1px solid var(--neon-cyan); border-radius: 6px; 
+            padding: 4px 8px; font-size: 0.8rem; color: #fff; text-align: center; margin-top: 4px; 
+            font-family: var(--font-body); white-space: nowrap; box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+        }
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 950px) {
+            .panel-left { width: 35%; left: 2%; padding: 15px; } .panel-right { width: 35%; right: 2%; padding: 15px; } .ui-title { font-size: 1.1rem; }
+        }
+        @media (max-width: 650px) {
+            .panel-left { width: 90%; left: 5%; top: 2vh; max-height: 50vh; padding: 15px;}
+            .panel-right { width: 90%; left: 5%; top: auto; bottom: 2vh; right: auto; max-height: 35vh; padding: 15px;}
+            .mode-selector { flex-direction: row; flex-wrap: wrap; justify-content: center;}
+            .btn-mode { flex: 1; min-width: 130px; font-size: 0.75rem;}
+            .instructions { display: none; } 
+            .countries-grid { gap: 8px; } .country-box { padding: 8px 5px; } .c-time { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-panel panel-left">
+        <div class="ui-title">🔭 OBSERVASI ROTASI BUMI</div>
+        
+        <div class="time-box">
+            <div class="time-label">WAKTU UNIVERSAL (UTC)</div>
+            <div class="time-value" id="timeDisplay">12:00</div>
+        </div>
+
+        <div class="slider-group">
+            <div style="font-size: 0.85rem; color: var(--neon-cyan); margin-bottom: 5px;">Kontrol Waktu (0 - 24 Jam):</div>
+            <input type="range" id="timeSlider" class="slider-control" min="0" max="24" step="0.1" value="12" oninput="updateTimeManual()">
+        </div>
+
+        <button class="btn-play" id="btnPlay" onclick="toggleAutoPlay()">▶ PUTAR OTOMATIS</button>
+
+        <div class="mode-selector">
+            <div style="font-size: 0.85rem; color: var(--neon-orange); text-align: center; margin-bottom: 5px; font-weight:600;">MODE PENGAMATAN</div>
+            <button id="btnNyata" class="btn-mode active" onclick="setMode('nyata')">🌍 Gerak Nyata (Bumi Berotasi)</button>
+            <button id="btnSemu" class="btn-mode" onclick="setMode('semu')">☀️ Gerak Semu (Matahari Bergerak)</button>
+        </div>
+
+        <div class="instructions">
+            👆 <b>Sentuh & Geser:</b> Memutar arah kamera 3D<br>
+            🤏 <b>Cubit:</b> Memperbesar Bumi (Zoom)<br>
+            <i>Bumi berputar dengan poros miring 23,5°</i>
+        </div>
+    </div>
+
+    <div class="ui-panel panel-right">
+        <div class="ui-title title-right">⏱️ ZONA WAKTU LOKAL</div>
+        
+        <div class="countries-grid">
+            <div class="country-box" id="box-tokyo">
+                <div class="c-name">🇯🇵 Tokyo (UTC+9)</div>
+                <div class="c-time" id="time-tokyo">--:--</div>
+                <div class="c-status" id="status-tokyo">--</div>
+            </div>
+            <div class="country-box" id="box-jakarta">
+                <div class="c-name">🇮🇩 Jakarta (UTC+7)</div>
+                <div class="c-time" id="time-jakarta">--:--</div>
+                <div class="c-status" id="status-jakarta">--</div>
+            </div>
+            <div class="country-box" id="box-london">
+                <div class="c-name">🇬🇧 London (UTC+0)</div>
+                <div class="c-time" id="time-london">--:--</div>
+                <div class="c-status" id="status-london">--</div>
+            </div>
+            <div class="country-box" id="box-newyork">
+                <div class="c-name">🇺🇸 New York (UTC-5)</div>
+                <div class="c-time" id="time-newyork">--:--</div>
+                <div class="c-status" id="status-newyork">--</div>
+            </div>
+        </div>
+
+        <div class="instructions" style="border-color: rgba(0,242,255,0.3); color: #cbd5e1; text-align: center;">
+            <i>Setiap 15° putaran bumi menghasilkan perbedaan waktu 1 jam.</i>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SETUP LINGKUNGAN 3D ---
+        const canvasContainer = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2, 7); 
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        canvasContainer.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enablePan = false; controls.minDistance = 2.5; controls.maxDistance = 12;
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5); scene.add(sunLight);
+        const ambientLight = new THREE.AmbientLight(0x151525, 0.5); scene.add(ambientLight);
+
+        const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(0.4, 32, 32), new THREE.MeshBasicMaterial({ color: 0xffdd00 })); scene.add(sunMesh);
+        const sunOrbitPath = new THREE.Mesh(new THREE.TorusGeometry(8, 0.015, 16, 100), new THREE.MeshBasicMaterial({ color: 0xffdd00, transparent: true, opacity: 0.5 }));
+        sunOrbitPath.rotation.x = Math.PI / 2; scene.add(sunOrbitPath);
+
+        const earthPivot = new THREE.Group(); earthPivot.rotation.z = 23.5 * Math.PI / 180; scene.add(earthPivot);
+        const earth = new THREE.Mesh(
+            new THREE.SphereGeometry(1.5, 64, 64),
+            new THREE.MeshPhongMaterial({
+                map: new THREE.TextureLoader().load('https://upload.wikimedia.org/wikipedia/commons/c/cd/Land_ocean_ice_2048.jpg'),
+                color: 0xffffff, emissive: 0x000000, specular: 0x222222, shininess: 15
+            })
+        );
+        earthPivot.add(earth);
+
+        // Bintang Latar
+        const starsGeo = new THREE.BufferGeometry();
+        const starsVertices = [];
+        for(let i=0; i<3000; i++) starsVertices.push((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100);
+        starsGeo.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.02})));
+
+        // --- 2. DATA KOTA & CACHE DOM (ANTI-LAG) ---
+        const cities = [
+            { id: "jakarta", name: "Jakarta", lat: -6.2088, lon: 106.8456, offset: 7 },
+            { id: "london", name: "London", lat: 51.5074, lon: -0.1278, offset: 0 },
+            { id: "newyork", name: "New York", lat: 40.7128, lon: -74.0060, offset: -5 },
+            { id: "tokyo", name: "Tokyo", lat: 35.6762, lon: 139.6503, offset: 9 }
+        ];
+
+        const R = 1.5; 
+        cities.forEach(city => {
+            // Buat HTML Marker
+            const marker = document.createElement('div');
+            marker.className = 'city-marker';
+            marker.innerHTML = `<div class="city-dot"></div><div class="city-info">${city.name}</div>`;
+            canvasContainer.appendChild(marker);
+            city.element = marker;
+
+            // Kordinat 3D di bola bumi
+            const phi = (90 - city.lat) * (Math.PI / 180);
+            const theta = (city.lon + 90) * (Math.PI / 180); 
+            const dummy = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.05));
+            dummy.position.set(-(R * Math.sin(phi) * Math.cos(theta)), (R * Math.cos(phi)), (R * Math.sin(phi) * Math.sin(theta)));
+            dummy.visible = false; earth.add(dummy);
+            city.mesh = dummy;
+
+            // Cache Elemen Panel Kanan agar tidak berat saat diputar
+            city.dom = {
+                box: document.getElementById(`box-${city.id}`),
+                time: document.getElementById(`time-${city.id}`),
+                status: document.getElementById(`status-${city.id}`),
+                isDaytime: null // Pengunci agar style tidak diganti tiap frame
+            };
+        });
+
+        // --- 3. LOGIKA KONTROL WAKTU ---
+        const timeSlider = document.getElementById('timeSlider');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const btnPlay = document.getElementById('btnPlay');
+        let currentUTC = 12.0; let isPlaying = false; let currentMode = 'nyata';
+
+        function formatTimeAndStatus(decimalHours, city) {
+            let h = Math.floor(decimalHours);
+            let m = Math.floor((decimalHours % 1) * 60);
+            
+            if(h >= 24) h %= 24; if(h < 0) h = (h % 24) + 24; if(h === 24) h = 0;
+            city.dom.time.innerText = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+
+            let isDay = (h >= 6 && h < 18);
+            
+            // JIKA STATUS BERUBAH BARU UBAH CSS (Mencegah Lag)
+            if (city.dom.isDaytime !== isDay) {
+                city.dom.isDaytime = isDay;
+                if (isDay) {
+                    city.dom.box.style.borderColor = "var(--neon-orange)";
+                    city.dom.box.style.boxShadow = "inset 0 0 10px rgba(255, 153, 0, 0.2)";
+                    city.dom.time.style.color = "var(--neon-orange)"; city.dom.time.style.textShadow = "var(--orange-glow)";
+                    city.dom.status.innerText = "☀️ SIANG"; city.dom.status.style.color = "var(--neon-orange)";
+                } else {
+                    city.dom.box.style.borderColor = "var(--neon-cyan)";
+                    city.dom.box.style.boxShadow = "inset 0 0 10px rgba(0, 242, 255, 0.1)";
+                    city.dom.time.style.color = "var(--neon-cyan)"; city.dom.time.style.textShadow = "var(--cyan-glow)";
+                    city.dom.status.innerText = "🌙 MALAM"; city.dom.status.style.color = "var(--neon-cyan)";
+                }
+            }
+        }
+
+        function applyEarthRotation() {
+            let angle = ((currentUTC - 12) / 24) * Math.PI * 2;
+            if (currentMode === 'nyata') {
+                earth.rotation.y = angle;
+                sunMesh.position.set(8, 0, 0); sunLight.position.set(8, 0, 0);
+                sunOrbitPath.visible = false; sunMesh.visible = false;      
+            } else {
+                earth.rotation.y = 0; 
+                sunMesh.position.set(8 * Math.cos(-angle), 0, 8 * Math.sin(-angle));
+                sunLight.position.copy(sunMesh.position);
+                sunOrbitPath.visible = true; sunMesh.visible = true;      
+            }
+        }
+
+        function updateTimeLogic() {
+            let h = Math.floor(currentUTC); let m = Math.floor((currentUTC % 1) * 60);
+            timeDisplay.innerText = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            
+            applyEarthRotation();
+            cities.forEach(city => formatTimeAndStatus(currentUTC + city.offset, city));
+        }
+
+        function updateTimeManual() {
+            if(!isPlaying && timeSlider.value % 1 === 0) {
+                let aud = document.getElementById('audioPop'); aud.volume = 0.1; aud.play().catch(()=>{});
+            }
+            currentUTC = parseFloat(timeSlider.value);
+            updateTimeLogic();
+        }
+
+        function toggleAutoPlay() {
+            let aud = document.getElementById('audioPop'); aud.volume = 0.5; aud.play().catch(()=>{});
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                btnPlay.innerText = "⏸ HENTIKAN ROTASI"; btnPlay.classList.add('playing'); autoRotate();
+            } else {
+                btnPlay.innerText = "▶ PUTAR OTOMATIS"; btnPlay.classList.remove('playing');
+            }
+        }
+
+        function autoRotate() {
+            if(!isPlaying) return;
+            currentUTC += 0.05; 
+            if (currentUTC >= 24) currentUTC = 0;
+            timeSlider.value = currentUTC;
+            updateTimeLogic();
+            requestAnimationFrame(autoRotate);
+        }
+
+        function setMode(mode) {
+            document.getElementById('audioPop').play().catch(()=>{}); currentMode = mode;
+            document.getElementById('btnNyata').classList.toggle('active', mode === 'nyata');
+            document.getElementById('btnSemu').classList.toggle('active', mode === 'semu');
+            applyEarthRotation();
+        }
+
+        // --- 4. RENDER LOOP OPTIMAL ---
+        const tempV = new THREE.Vector3();
+        const camDir = new THREE.Vector3();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); 
+
+            // Proyeksi Kota 3D menggunakan CSS Transform untuk Performa Maksimal
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            cities.forEach(city => {
+                city.mesh.getWorldPosition(tempV);
+                const normal = tempV.clone().normalize(); 
+                camDir.subVectors(camera.position, tempV).normalize(); 
+                
+                if (normal.dot(camDir) > 0.05) {
+                    tempV.project(camera);
+                    const x = (tempV.x * 0.5 + 0.5) * width;
+                    const y = (-(tempV.y * 0.5) + 0.5) * height;
+                    city.element.style.display = 'flex';
+                    city.element.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
+                } else {
+                    city.element.style.display = 'none';
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Inisialisasi Pertama
+        updateTimeLogic(); animate();
+    </script>
+</body>
+</html>

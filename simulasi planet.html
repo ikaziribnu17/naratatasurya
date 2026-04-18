@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ASTRO-QUEST: Observasi Tata Surya 3D</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- KESEPAKATAN TEMA & WARNA --- */
+        :root {
+            --space-blue: #0B0D17;
+            --neon-cyan: #00F2FF;
+            --neon-orange: #FF9900;
+            --cyan-glow: 0 0 15px rgba(0, 242, 255, 0.6);
+            --orange-glow: 0 0 15px rgba(255, 153, 0, 0.6);
+            --font-heading: 'Fredoka', sans-serif;
+            --font-body: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            margin: 0; overflow: hidden;
+            background-color: var(--space-blue); 
+            font-family: var(--font-body); color: white;
+            width: 100vw; height: 100dvh; position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* --- LATAR BELAKANG --- */
+        .nebula-bg {
+            position: fixed; top: -5%; left: -5%; width: 110%; height: 110%;
+            background: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2048&auto=format&fit=crop') no-repeat center center/cover;
+            z-index: 1; opacity: 0.4; animation: panSpace 60s infinite alternate linear;
+            pointer-events: none;
+        }
+        @keyframes panSpace { 0% { transform: scale(1) translate(0, 0); } 100% { transform: scale(1.05) translate(-2%, 2%); } }
+
+        .cockpit-frame {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.9), inset 0 0 20px rgba(0, 242, 255, 0.3);
+            border: 2px solid rgba(0, 242, 255, 0.1); pointer-events: none; z-index: 10;
+        }
+
+        /* --- PANEL UTAMA --- */
+        .main-panel {
+            position: relative; z-index: 20;
+            width: 95vw; max-width: 1200px;
+            height: 94dvh; /* Dibatasi agar tidak menyentuh ujung layar */
+            background: rgba(11, 13, 23, 0.85); backdrop-filter: blur(10px);
+            border: 2px solid var(--neon-cyan); border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), inset 0 0 20px rgba(0, 242, 255, 0.2);
+            display: flex; flex-direction: column; 
+            padding: 2vh 2vw; gap: 15px;
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- HEADER --- */
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px dashed rgba(0, 242, 255, 0.3); padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+        .ui-title {
+            font-family: var(--font-heading); font-size: clamp(1.5rem, 2.5vw, 2rem); 
+            color: var(--neon-cyan); text-transform: uppercase; text-shadow: var(--cyan-glow);
+            display: flex; align-items: center; gap: 10px;
+        }
+        .instruction {
+            font-size: clamp(0.8rem, 1vw, 1rem); color: var(--neon-orange); 
+            font-weight: 500; text-align: right; text-shadow: var(--orange-glow);
+        }
+
+        /* --- IFRAME WRAPPER --- */
+        .sketchfab-embed-wrapper {
+            flex-grow: 1; /* Mengisi seluruh sisa layar yang tersedia */
+            min-height: 0; /* Penting untuk flex-grow agar tidak meluap */
+            width: 100%;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            background: #000; /* Warna dasar jika loading */
+        }
+        
+        .sketchfab-embed-wrapper iframe {
+            width: 100%; height: 100%;
+            border: none; position: absolute;
+            top: 0; left: 0;
+        }
+
+        /* --- CREDITS (FOOTER) --- */
+        .credits {
+            flex-shrink: 0; font-size: clamp(0.7rem, 1vw, 0.9rem); 
+            color: #94a3b8; text-align: center;
+            background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px;
+            border: 1px solid rgba(0, 242, 255, 0.1);
+        }
+        .credits a {
+            font-family: var(--font-heading); color: var(--neon-cyan); 
+            text-decoration: none; transition: 0.3s;
+        }
+        .credits a:hover {
+            color: var(--neon-orange); text-shadow: var(--orange-glow);
+        }
+
+        /* --- TOMBOL KEMBALI --- */
+        .btn-back {
+            background: rgba(0, 242, 255, 0.1); border: 2px solid var(--neon-cyan); 
+            color: var(--neon-cyan); font-family: var(--font-heading); font-size: clamp(1rem, 1.2vw, 1.2rem); 
+            padding: 12px 25px; border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; flex-shrink: 0; align-self: center;
+            width: fit-content; margin-top: auto;
+        }
+        .btn-back:hover { background: var(--neon-cyan); color: var(--space-blue); box-shadow: var(--cyan-glow); transform: translateY(-3px);}
+
+        /* --- RESPONSIVE MOBILE --- */
+        @media (max-width: 768px) {
+            .main-panel { width: 98vw; height: 96dvh; padding: 15px; }
+            .panel-header { flex-direction: column; align-items: flex-start; gap: 5px; }
+            .instruction { text-align: left; }
+            .btn-back { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="audioPop" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+
+    <div class="nebula-bg"></div>
+    <div class="cockpit-frame"></div>
+
+    <div class="main-panel">
+        
+        <div class="panel-header">
+            <div class="ui-title">🔭 OBSERVASI TATA SURYA 3D</div>
+            <div class="instruction">👆 Sentuh, Putar, dan Cubit untuk Zoom!</div>
+        </div>
+
+        <div class="sketchfab-embed-wrapper">
+            <iframe 
+                title="TATA SURYA" 
+                frameborder="0" 
+                allowfullscreen 
+                mozallowfullscreen="true" 
+                webkitallowfullscreen="true" 
+                allow="autoplay; fullscreen; xr-spatial-tracking" 
+                xr-spatial-tracking 
+                execution-while-out-of-viewport 
+                execution-while-not-rendered 
+                web-share 
+                src="https://sketchfab.com/models/b16ca8e3c05c4cc3aa3fb452bfc039dd/embed">
+            </iframe>
+        </div>
+
+        <div class="credits">
+            Model <a href="https://sketchfab.com/3d-models/tata-surya-b16ca8e3c05c4cc3aa3fb452bfc039dd?utm_medium=embed&utm_campaign=share-popup&utm_content=b16ca8e3c05c4cc3aa3fb452bfc039dd" target="_blank" rel="nofollow">TATA SURYA</a> dibuat oleh <a href="https://sketchfab.com/TataSuryaUntukSMP?utm_medium=embed&utm_campaign=share-popup&utm_content=b16ca8e3c05c4cc3aa3fb452bfc039dd" target="_blank" rel="nofollow">Aernello</a> di <a href="https://sketchfab.com?utm_medium=embed&utm_campaign=share-popup&utm_content=b16ca8e3c05c4cc3aa3fb452bfc039dd" target="_blank" rel="nofollow">Sketchfab</a>.
+        </div>
+
+        <button class="btn-back" onclick="navigasi('menu 3 sektor.html')">⬅ KEMBALI KE MENU</button>
+
+    </div>
+
+    <script>
+        function navigasi(url) {
+            document.getElementById('audioPop').play().catch(()=>{});
+            setTimeout(() => { window.location.href = url; }, 300);
+        }
+    </script>
+</body>
+</html>
